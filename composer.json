@@ -1,5 +1,5 @@
 {
-    "name": "laravel-notification-channels/:package_name",
+    "name": "ringierimu/service-bus-notifications-channel",
     "description": ":package_description",
     "homepage": "https://github.com/laravel-notification-channels/:package_name",
     "license": "MIT",
