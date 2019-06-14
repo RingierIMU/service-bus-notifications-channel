@@ -1,12 +1,12 @@
 <?php
 
-namespace NotificationChannels\ServiceBus;
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Aws\Api\Service;
 use http\Exception\InvalidArgumentException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use NotificationChannels\ServiceBus\Exceptions\InvalidConfigException;
+use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Webpatser\Uuid\Uuid;
 
 class ServiceBusEvent
@@ -75,13 +75,15 @@ class ServiceBusEvent
     public function withRoute(string $route): ServiceBusEvent
     {
         $this->route = $route;
+        return $this;
     }
 
-    public function withUser(array $user)
+    public function withUser($user)
     {
         $this->users = array(
             $user
         );
+        return $this;
     }
 
     public function createdAt(string $createdAtDate): ServiceBusEvent

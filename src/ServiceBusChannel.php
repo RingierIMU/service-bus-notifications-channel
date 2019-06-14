@@ -1,14 +1,12 @@
 <?php
 
-namespace NotificationChannels\ServiceBus;
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use NotificationChannels\ServiceBus\Events\MessageWasSent;
-use NotificationChannels\ServiceBus\Events\SendingMessage;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\ServiceBus\Exceptions\CouldNotSendNotification;
+use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
 
 class ServiceBusChannel
 {
@@ -33,7 +31,7 @@ class ServiceBusChannel
      * @param mixed $notifiable
      * @param \Illuminate\Notifications\Notification $notification
      *
-     * @throws \NotificationChannels\:channel_namespace\Exceptions\CouldNotSendNotification
+     * @throws \NotificationChannels\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification
      */
     public function send($notifiable, Notification $notification)
     {

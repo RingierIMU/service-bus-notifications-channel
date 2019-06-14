@@ -1,6 +1,6 @@
 <?php
 
-namespace NotificationChannels\ServiceBus;
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Illuminate\Support\ServiceProvider;
 
