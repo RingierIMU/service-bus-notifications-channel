@@ -31,6 +31,7 @@ class ServiceBusEvent
     protected $payload;
     protected $route;
     protected $users;
+    protected $useStaging;
 
     public function __construct(string $eventType)
     {
@@ -86,6 +87,13 @@ class ServiceBusEvent
         return $this;
     }
 
+    public function onStaging()
+    {
+        $this->useStaging = true;
+
+        return $this;
+    }
+
     public function createdAt(string $createdAtDate): ServiceBusEvent
     {
         $this->createdAt = $createdAtDate;
@@ -116,7 +124,7 @@ class ServiceBusEvent
     private function generateUUID(string $key): string
     {
         $uuid = Uuid::generate(4)->string;
-        Log::info('Generating UUID '.$uuid.' for '.$key, ['ServiceBusEvent']);
+        Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid, 'key' => $key]);
         return $uuid;
     }
 
@@ -134,5 +142,15 @@ class ServiceBusEvent
             'route' => $this->route,
             'payload' => $this->getPayload()
         );
+    }
+
+    public function useStaging()
+    {
+        return $this->useStaging;
+    }
+
+    public function getEventType()
+    {
+        return $this->eventType;
     }
 }
