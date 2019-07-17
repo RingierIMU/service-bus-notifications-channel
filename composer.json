@@ -1,6 +1,6 @@
 {
     "name": "ringierimu/service-bus-notifications-channel",
-    "description": ":package_description",
+    "description": "",
     "homepage": "https://github.com/laravel-notification-channels/:package_name",
     "license": "MIT",
     "authors": [
@@ -22,18 +22,26 @@
     },
     "autoload": {
         "psr-4": {
-            "NotificationChannels\\:channel_namespace\\": "src"
+            "Ringierimu\\ServiceBusNotificationsChannel\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "NotificationChannels\\:channel_namespace\\Test\\": "tests"
+            "Ringierimu\\ServiceBusNotificationsChannel\\Test\\": "tests"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Ringierimu\\ServiceBusNotificationsChannel\\ServiceBusServiceProvider"
+            ]
+        },
+        "include_files": [
+            "tests/Fixtures/Helpers.php"
+        ]
+    },
+    
     "scripts": {
         "test": "vendor/bin/phpunit"
-    },
-    "config": {
-        "sort-packages": true
     }
 }
