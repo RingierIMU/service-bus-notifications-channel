@@ -9,9 +9,21 @@ use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Webpatser\Uuid\Uuid;
 
+/**
+ * Class ServiceBusEvent
+ * @package Ringierimu\ServiceBusNotificationsChannel
+ *
+ * @property string eventType
+ * @property string ventureReference
+ * @property string culture
+ * @property string actionType
+ * @property string actionReference
+ * @property Carbon createdAt
+ * @property array payload
+ * @property string route
+ */
 class ServiceBusEvent
 {
-
     public static $actionTypes = [
         'user',
         'admin',
@@ -30,9 +42,11 @@ class ServiceBusEvent
     protected $createdAt;
     protected $payload;
     protected $route;
-    protected $users;
-    protected $useStaging;
 
+    /**
+     * ServiceBusEvent constructor.
+     * @param string $eventType
+     */
     public function __construct(string $eventType)
     {
         $this->eventType = $eventType;
@@ -64,6 +78,7 @@ class ServiceBusEvent
     public function withReference(string $ventureReference): ServiceBusEvent
     {
         $this->ventureReference = $ventureReference;
+
         return $this;
     }
 
@@ -78,6 +93,7 @@ class ServiceBusEvent
     public function withCulture(string $culture): ServiceBusEvent
     {
         $this->culture = $culture;
+
         return $this;
     }
 
@@ -95,7 +111,7 @@ class ServiceBusEvent
      */
     public function withAction(string $type, string $reference): ServiceBusEvent
     {
-        if(in_array($type, ServiceBusEvent::$actionTypes)){
+        if (in_array($type, ServiceBusEvent::$actionTypes)) {
             $this->actionType = $type;
             $this->actionReference = $reference;
         } else {
@@ -116,33 +132,22 @@ class ServiceBusEvent
     public function withRoute(string $route): ServiceBusEvent
     {
         $this->route = $route;
+
         return $this;
     }
 
     /**
-     * The user that the event applies to, where relevant, eg, the user that logged in.
+     * The entity that the event applies to, where relevant, eg, the user that logged in.
      *
-     * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the user
+     * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
      *
-     * @param $user
+     * @param string $resourceName
+     * @param $resource
      * @return $this
      */
-    public function withUser($user)
+    public function withResources(string $resourceName, $resource)
     {
-        $this->users = array(
-            $user
-        );
-        return $this;
-    }
-
-    /**
-     * Use the staging environment
-     *
-     * @return $this
-     */
-    public function onStaging()
-    {
-        $this->useStaging = true;
+        $this->$resourceName = [$resource];
 
         return $this;
     }
@@ -150,12 +155,13 @@ class ServiceBusEvent
     /**
      * Date time of the event creation on the event source in ISO8601/RFC3339 format
      *
-     * @param string $createdAtDate
+     * @param Carbon $createdAtDate
      * @return ServiceBusEvent
      */
-    public function createdAt(string $createdAtDate): ServiceBusEvent
+    public function createdAt(Carbon $createdAtDate): ServiceBusEvent
     {
         $this->createdAt = $createdAtDate;
+
         return $this;
     }
 
@@ -166,7 +172,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ? $this->culture : config('services.service_bus.culture');
+        return $this->culture ?? config('services.service_bus.culture');
     }
 
     /**
@@ -177,7 +183,7 @@ class ServiceBusEvent
      */
     protected function getVentureReference(): string
     {
-        return $this->ventureReference ? $this->ventureReference : $this->generateUUID('venture_reference');
+        return $this->ventureReference ?? $this->generateUUID('venture_reference');
     }
 
     /**
@@ -187,13 +193,7 @@ class ServiceBusEvent
      */
     protected function getPayload(): array
     {
-        $payload = array();
-
-        if($this->users){
-            $payload['users'] = $this->users;
-        }
-
-        return $payload;
+        return $this->payload;
     }
 
     /**
@@ -206,7 +206,9 @@ class ServiceBusEvent
     private function generateUUID(string $key): string
     {
         $uuid = Uuid::generate(4)->string;
+
         Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid, 'key' => $key]);
+
         return $uuid;
     }
 
@@ -219,25 +221,23 @@ class ServiceBusEvent
      */
     public function getParams(): array
     {
-        return array (
-            'events' => [$this->eventType],
+        return array(
+            'events'            => [$this->eventType],
             'venture_reference' => $this->getVentureReference(),
             'venture_config_id' => config('services.service_bus.venture_config_id'),
-            'created_at' => $this->createdAt,
-            'culture' => $this->getCulture(),
-            'action_type' => $this->actionType,
-            'action_reference' => $this->actionReference,
-            'version' => config('services.service_bus.version'),
-            'route' => $this->route,
-            'payload' => $this->getPayload()
+            'created_at'        => $this->createdAt->toDateString(),
+            'culture'           => $this->getCulture(),
+            'action_type'       => $this->actionType,
+            'action_reference'  => $this->actionReference,
+            'version'           => config('services.service_bus.version'),
+            'route'             => $this->route,
+            'payload'           => $this->getPayload()
         );
     }
 
-    public function useStaging()
-    {
-        return $this->useStaging;
-    }
-
+    /**
+     * @return string
+     */
     public function getEventType()
     {
         return $this->eventType;
