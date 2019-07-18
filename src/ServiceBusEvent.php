@@ -3,7 +3,9 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Aws\Api\Service;
+use Carbon\Carbon;
 use http\Exception\InvalidArgumentException;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
@@ -145,9 +147,9 @@ class ServiceBusEvent
      * @param $resource
      * @return $this
      */
-    public function withResources(string $resourceName, $resource)
+    public function withResources(string $resourceName, JsonResource $resource)
     {
-        $this->$resourceName = [$resource];
+        $this->payload[$resourceName] = [$resource->jsonSerialize()];
 
         return $this;
     }
@@ -225,7 +227,7 @@ class ServiceBusEvent
             'events'            => [$this->eventType],
             'venture_reference' => $this->getVentureReference(),
             'venture_config_id' => config('services.service_bus.venture_config_id'),
-            'created_at'        => $this->createdAt->toDateString(),
+            'created_at'        => $this->createdAt ? $this->createdAt->toDateTimeString() : Carbon::now()->toDateTimeString(),
             'culture'           => $this->getCulture(),
             'action_type'       => $this->actionType,
             'action_reference'  => $this->actionReference,

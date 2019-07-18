@@ -46,9 +46,11 @@ class ServiceBusChannel
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
 
+        $params = $event->getParams();
+
         if (config('services.service_bus.enabled') == false) {
             Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus']);
-            Log::debug(print_r($event->getParams(), true), ['tag' => 'ServiceBus']);
+            Log::debug(print_r($params, true), ['tag' => 'ServiceBus']);
             return;
         }
 
@@ -63,7 +65,7 @@ class ServiceBusChannel
                 $this->getUrl('events'),
                 array(
                     'headers' => $headers,
-                    'form_params' => $event->getParams()
+                    'form_params' => $params
                 )
             );
 
