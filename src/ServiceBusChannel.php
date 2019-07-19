@@ -1,15 +1,14 @@
-<?php
-
-namespace Ringierimu\ServiceBusNotificationsChannel;
+<?php namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\RequestOptions;
+use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Notifications\Notification;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
-use Stringy\StaticStringy;
+use Throwable;
 
 /**
  * Class ServiceBusChannel
@@ -26,6 +25,10 @@ class ServiceBusChannel
 
     const CACHE_KEY_TOKEN = 'service-bus-token';
 
+    /**
+     * ServiceBusChannel constructor.
+     * @throws BindingResolutionException
+     */
     public function __construct()
     {
         $this->client = new Client([
@@ -37,9 +40,11 @@ class ServiceBusChannel
      * Send the given notification.
      *
      * @param mixed $notifiable
-     * @param \Illuminate\Notifications\Notification $notification
+     * @param Notification $notification
      *
-     * @throws \Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification
+     * @throws CouldNotSendNotification
+     * @throws GuzzleException
+     * @throws Throwable
      */
     public function send($notifiable, Notification $notification)
     {
@@ -61,7 +66,7 @@ class ServiceBusChannel
         ];
 
         try {
-            $response = $this->client->post(
+            $this->client->post(
                 $this->getUrl('events'),
                 array(
                     'headers' => $headers,
@@ -93,7 +98,9 @@ class ServiceBusChannel
 
     /**
      * @return String
+     * @throws BindingResolutionException
      * @throws CouldNotSendNotification
+     * @throws GuzzleException
      */
     private function getToken(): String
     {

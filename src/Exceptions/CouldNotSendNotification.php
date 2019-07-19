@@ -1,9 +1,8 @@
-<?php
-
-namespace Ringierimu\ServiceBusNotificationsChannel\Exceptions;
+<?php namespace Ringierimu\ServiceBusNotificationsChannel\Exceptions;
 
 use \Exception;
 use \Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Class CouldNotSendNotification
@@ -12,24 +11,26 @@ use \Illuminate\Support\Facades\Log;
 class CouldNotSendNotification extends Exception
 {
     /**
-     * @param $response
+     * @param Throwable $exception
      * @return CouldNotSendNotification
      */
-    public static function authFailed($response)
+    public static function authFailed(Throwable $exception)
     {
-        Log::error("Could not get an auth token from the server: " . $response, ['tag' => 'ServiceBus']);
+        Log::error("Could not get an auth token from the server: " . $exception->getMessage(), ['tag' => 'ServiceBus']);
+        Log::error($exception->getTraceAsString(), ['tag' => 'ServiceBus']);
 
-        return new static("Could not get an auth token from the server: " . $response);
+        return new static("Could not get an auth token from the server: " . $exception->getMessage());
     }
 
     /**
-     * @param $exception
+     * @param Throwable $exception
      * @return CouldNotSendNotification
      */
-    public static function requestFailed($exception)
+    public static function requestFailed(Throwable $exception)
     {
         Log::error('Something went wrong logging the event: ' . $exception->getMessage(), ['tag' => 'ServiceBus']);
+        Log::error($exception->getTraceAsString(), ['tag' => 'ServiceBus']);
 
-        return new static("Something went wrong logging the event: " . $exception);
+        return new static("Something went wrong logging the event: " . $exception->getMessage());
     }
 }

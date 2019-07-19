@@ -1,15 +1,11 @@
-<?php
+<?php namespace Ringierimu\ServiceBusNotificationsChannel;
 
-namespace Ringierimu\ServiceBusNotificationsChannel;
-
-use Aws\Api\Service;
 use Carbon\Carbon;
-use http\Exception\InvalidArgumentException;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Arr;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
-use Webpatser\Uuid\Uuid;
+use Throwable;
 
 /**
  * Class ServiceBusEvent
@@ -117,7 +113,7 @@ class ServiceBusEvent
             $this->actionType = $type;
             $this->actionReference = $reference;
         } else {
-            throw new InvalidConfigException('Action type must be on of the following: ' . ServiceBusEvent::$actionTypes);
+            throw new InvalidConfigException('Action type must be on of the following: ' . print_r(ServiceBusEvent::$actionTypes, true));
         }
 
         return $this;
@@ -144,12 +140,12 @@ class ServiceBusEvent
      * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
      *
      * @param string $resourceName
-     * @param $resource
+     * @param array $resource
      * @return $this
      */
-    public function withResources(string $resourceName, JsonResource $resource)
+    public function withResources(string $resourceName, array $resource)
     {
-        $this->payload[$resourceName] = [$resource->jsonSerialize()];
+        $this->payload[$resourceName][] = $resource;
 
         return $this;
     }
@@ -171,6 +167,7 @@ class ServiceBusEvent
      * Returns the culture to be use, will use config services.service_bus.culture if not set on the event
      *
      * @return string
+     * @throws BindingResolutionException
      */
     protected function getCulture(): string
     {
@@ -181,7 +178,7 @@ class ServiceBusEvent
      * Get the venture reference, will generate a UUID if not set on the event
      *
      * @return string
-     * @throws \Exception
+     * @throws Throwable
      */
     protected function getVentureReference(): string
     {
@@ -203,15 +200,15 @@ class ServiceBusEvent
      *
      * @param string $key
      * @return string
-     * @throws \Exception
+     * @throws Throwable
      */
     private function generateUUID(string $key): string
     {
-        $uuid = Uuid::generate(4)->string;
+        $uuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'php.net');
 
-        Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid, 'key' => $key]);
+        Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid->toString(), 'key' => $key]);
 
-        return $uuid;
+        return $uuid->toString();
     }
 
 
@@ -219,7 +216,7 @@ class ServiceBusEvent
      * Return the event as an array that can be sent to the service
      *
      * @return array
-     * @throws \Exception
+     * @throws Throwable
      */
     public function getParams(): array
     {
