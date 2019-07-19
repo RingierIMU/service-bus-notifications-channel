@@ -1,4 +1,6 @@
-<?php namespace Ringierimu\ServiceBusNotificationsChannel;
+<?php
+
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -11,8 +13,7 @@ use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotificatio
 use Throwable;
 
 /**
- * Class ServiceBusChannel
- * @package Ringierimu\ServiceBusNotificationsChannel
+ * Class ServiceBusChannel.
  */
 class ServiceBusChannel
 {
@@ -27,6 +28,7 @@ class ServiceBusChannel
 
     /**
      * ServiceBusChannel constructor.
+     *
      * @throws BindingResolutionException
      */
     public function __construct()
@@ -39,7 +41,7 @@ class ServiceBusChannel
     /**
      * Send the given notification.
      *
-     * @param mixed $notifiable
+     * @param mixed        $notifiable
      * @param Notification $notification
      *
      * @throws CouldNotSendNotification
@@ -56,22 +58,23 @@ class ServiceBusChannel
         if (config('services.service_bus.enabled') == false) {
             Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus']);
             Log::debug(print_r($params, true), ['tag' => 'ServiceBus']);
+
             return;
         }
 
         $token = $this->getToken();
 
         $headers = [
-            'x-api-key' => $token
+            'x-api-key' => $token,
         ];
 
         try {
             $this->client->post(
                 $this->getUrl('events'),
-                array(
-                    'headers' => $headers,
-                    'form_params' => $params
-                )
+                [
+                    'headers'     => $headers,
+                    'form_params' => $params,
+                ]
             );
 
             Log::info('Notification sent', ['tag' => 'ServiceBus', 'event' => $event->getEventType()]);
@@ -80,7 +83,7 @@ class ServiceBusChannel
                 Log::info('403 received. Logging in and retrying', ['tag' => 'ServiceBus']);
 
                 // clear the invalid token //
-                Cache::forget(ServiceBusChannel::CACHE_KEY_TOKEN);
+                Cache::forget(self::CACHE_KEY_TOKEN);
 
                 if (!$this->hasAttemptedLogin) {
                     // redo the call which will now redo the login //
@@ -88,6 +91,7 @@ class ServiceBusChannel
                     $this->hasAttemptedLogin = true;
                 } else {
                     $this->hasAttemptedLogin = false;
+
                     throw CouldNotSendNotification::authFailed($exception);
                 }
             } else {
@@ -97,14 +101,15 @@ class ServiceBusChannel
     }
 
     /**
-     * @return String
      * @throws BindingResolutionException
      * @throws CouldNotSendNotification
      * @throws GuzzleException
+     *
+     * @return string
      */
-    private function getToken(): String
+    private function getToken(): string
     {
-        $token = Cache::get(ServiceBusChannel::CACHE_KEY_TOKEN);
+        $token = Cache::get(self::CACHE_KEY_TOKEN);
 
         if (empty($token)) {
             try {
@@ -112,10 +117,10 @@ class ServiceBusChannel
                     $this->getUrl('login'),
                     [
                         'json' => [
-                            'username' => config('services.service_bus.username'),
-                            'password' => config('services.service_bus.password'),
-                            'venture_config_id' => config('services.service_bus.venture_config_id')
-                        ]
+                            'username'          => config('services.service_bus.username'),
+                            'password'          => config('services.service_bus.password'),
+                            'venture_config_id' => config('services.service_bus.venture_config_id'),
+                        ],
                     ]
                 )->getBody();
 
@@ -137,9 +142,10 @@ class ServiceBusChannel
 
     /**
      * @param $endpoint
-     * @return String
+     *
+     * @return string
      */
-    private function getUrl($endpoint): String
+    private function getUrl($endpoint): string
     {
         return $endpoint;
     }

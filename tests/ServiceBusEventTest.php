@@ -1,4 +1,6 @@
-<?php namespace NotificationChannels\ServiceBusNotificationsChannel\Tests;
+<?php
+
+namespace NotificationChannels\ServiceBusNotificationsChannel\Tests;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
@@ -7,8 +9,7 @@ use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 use Throwable;
 
 /**
- * Class ServiceBusEventTest
- * @package NotificationChannels\ServiceBusNotificationsChannel\Test
+ * Class ServiceBusEventTest.
  */
 class ServiceBusEventTest extends TestCase
 {

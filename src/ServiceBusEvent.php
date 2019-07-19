@@ -1,4 +1,6 @@
-<?php namespace Ringierimu\ServiceBusNotificationsChannel;
+<?php
+
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Container\BindingResolutionException;
@@ -8,8 +10,7 @@ use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
 
 /**
- * Class ServiceBusEvent
- * @package Ringierimu\ServiceBusNotificationsChannel
+ * Class ServiceBusEvent.
  *
  * @property string eventType
  * @property string ventureReference
@@ -29,7 +30,7 @@ class ServiceBusEvent
         'system',
         'app',
         'migration',
-        'other'
+        'other',
     ];
 
     protected $eventType;
@@ -43,6 +44,7 @@ class ServiceBusEvent
 
     /**
      * ServiceBusEvent constructor.
+     *
      * @param string $eventType
      */
     public function __construct(string $eventType)
@@ -58,9 +60,10 @@ class ServiceBusEvent
      * - services.service_bus.version
      *
      * @param string $eventType
+     *
      * @return ServiceBusEvent
      */
-    public static function create(string $eventType): ServiceBusEvent
+    public static function create(string $eventType): self
     {
         return new static($eventType);
     }
@@ -71,9 +74,10 @@ class ServiceBusEvent
      * If this is not sent a UUID will be generated and sent with the request.
      *
      * @param string $ventureReference
+     *
      * @return ServiceBusEvent
      */
-    public function withReference(string $ventureReference): ServiceBusEvent
+    public function withReference(string $ventureReference): self
     {
         $this->ventureReference = $ventureReference;
 
@@ -81,14 +85,15 @@ class ServiceBusEvent
     }
 
     /**
-     * ISO representation of the language and culture active on the system when the event was created
+     * ISO representation of the language and culture active on the system when the event was created.
      *
      * This can be set here for each individual event, or it can be set in config services.service_bus.culture
      *
      * @param string $culture
+     *
      * @return ServiceBusEvent
      */
-    public function withCulture(string $culture): ServiceBusEvent
+    public function withCulture(string $culture): self
     {
         $this->culture = $culture;
 
@@ -104,16 +109,18 @@ class ServiceBusEvent
      *
      * @param string $type
      * @param string $reference
-     * @return ServiceBusEvent
+     *
      * @throws InvalidConfigException
+     *
+     * @return ServiceBusEvent
      */
-    public function withAction(string $type, string $reference): ServiceBusEvent
+    public function withAction(string $type, string $reference): self
     {
-        if (in_array($type, ServiceBusEvent::$actionTypes)) {
+        if (in_array($type, self::$actionTypes)) {
             $this->actionType = $type;
             $this->actionReference = $reference;
         } else {
-            throw new InvalidConfigException('Action type must be on of the following: ' . print_r(ServiceBusEvent::$actionTypes, true));
+            throw new InvalidConfigException('Action type must be on of the following: '.print_r(self::$actionTypes, true));
         }
 
         return $this;
@@ -125,9 +132,10 @@ class ServiceBusEvent
      * this to switch on their recipe.
      *
      * @param string $route
+     *
      * @return ServiceBusEvent
      */
-    public function withRoute(string $route): ServiceBusEvent
+    public function withRoute(string $route): self
     {
         $this->route = $route;
 
@@ -140,7 +148,8 @@ class ServiceBusEvent
      * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
      *
      * @param string $resourceName
-     * @param array $resource
+     * @param array  $resource
+     *
      * @return $this
      */
     public function withResources(string $resourceName, array $resource)
@@ -151,12 +160,13 @@ class ServiceBusEvent
     }
 
     /**
-     * Date time of the event creation on the event source in ISO8601/RFC3339 format
+     * Date time of the event creation on the event source in ISO8601/RFC3339 format.
      *
      * @param Carbon $createdAtDate
+     *
      * @return ServiceBusEvent
      */
-    public function createdAt(Carbon $createdAtDate): ServiceBusEvent
+    public function createdAt(Carbon $createdAtDate): self
     {
         $this->createdAt = $createdAtDate;
 
@@ -164,10 +174,11 @@ class ServiceBusEvent
     }
 
     /**
-     * Returns the culture to be use, will use config services.service_bus.culture if not set on the event
+     * Returns the culture to be use, will use config services.service_bus.culture if not set on the event.
+     *
+     * @throws BindingResolutionException
      *
      * @return string
-     * @throws BindingResolutionException
      */
     protected function getCulture(): string
     {
@@ -175,10 +186,11 @@ class ServiceBusEvent
     }
 
     /**
-     * Get the venture reference, will generate a UUID if not set on the event
+     * Get the venture reference, will generate a UUID if not set on the event.
+     *
+     * @throws Throwable
      *
      * @return string
-     * @throws Throwable
      */
     protected function getVentureReference(): string
     {
@@ -186,7 +198,7 @@ class ServiceBusEvent
     }
 
     /**
-     * Gets the extra data to be sent as the payload param
+     * Gets the extra data to be sent as the payload param.
      *
      * @return array
      */
@@ -196,11 +208,13 @@ class ServiceBusEvent
     }
 
     /**
-     * Generates a v4 UUID
+     * Generates a v4 UUID.
      *
      * @param string $key
-     * @return string
+     *
      * @throws Throwable
+     *
+     * @return string
      */
     private function generateUUID(string $key): string
     {
@@ -211,16 +225,16 @@ class ServiceBusEvent
         return $uuid->toString();
     }
 
-
     /**
-     * Return the event as an array that can be sent to the service
+     * Return the event as an array that can be sent to the service.
+     *
+     * @throws Throwable
      *
      * @return array
-     * @throws Throwable
      */
     public function getParams(): array
     {
-        return array(
+        return [
             'events'            => [$this->eventType],
             'venture_reference' => $this->getVentureReference(),
             'venture_config_id' => config('services.service_bus.venture_config_id'),
@@ -230,8 +244,8 @@ class ServiceBusEvent
             'action_reference'  => $this->actionReference,
             'version'           => config('services.service_bus.version'),
             'route'             => $this->route,
-            'payload'           => $this->getPayload()
-        );
+            'payload'           => $this->getPayload(),
+        ];
     }
 
     /**

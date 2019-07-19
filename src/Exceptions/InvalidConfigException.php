@@ -1,8 +1,9 @@
-<?php namespace Ringierimu\ServiceBusNotificationsChannel\Exceptions;
+<?php
+
+namespace Ringierimu\ServiceBusNotificationsChannel\Exceptions;
 
 /**
- * Class InvalidConfigException
- * @package Ringierimu\ServiceBusNotificationsChannel\Exceptions
+ * Class InvalidConfigException.
  */
 class InvalidConfigException extends \Exception
 {

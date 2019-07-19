@@ -1,10 +1,11 @@
-<?php namespace Ringierimu\ServiceBusNotificationsChannel;
+<?php
+
+namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Illuminate\Support\ServiceProvider;
 
 /**
- * Class ServiceBusServiceProvider
- * @package Ringierimu\ServiceBusNotificationsChannel
+ * Class ServiceBusServiceProvider.
  */
 class ServiceBusServiceProvider extends ServiceProvider
 {
