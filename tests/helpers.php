@@ -11,6 +11,6 @@ if (!function_exists('config')) {
      */
     function config($key = null, $default = null)
     {
-        return '';
+        return 'true';
     }
 }

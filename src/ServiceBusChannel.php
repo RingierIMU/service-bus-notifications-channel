@@ -5,7 +5,6 @@ namespace Ringierimu\ServiceBusNotificationsChannel;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -28,8 +27,6 @@ class ServiceBusChannel
 
     /**
      * ServiceBusChannel constructor.
-     *
-     * @throws BindingResolutionException
      */
     public function __construct()
     {
@@ -101,7 +98,6 @@ class ServiceBusChannel
     }
 
     /**
-     * @throws BindingResolutionException
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      *
@@ -129,7 +125,7 @@ class ServiceBusChannel
                 $token = $json->token;
 
                 // there is no timeout on tokens, so cache it forever //
-                Cache::forever('service-bus-token', $token);
+                Cache::forever(self::CACHE_KEY_TOKEN, $token);
 
                 Log::info('Token received', ['tag' => 'ServiceBus']);
             } catch (RequestException $exception) {

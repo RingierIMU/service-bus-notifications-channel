@@ -42,7 +42,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Ringierimu\\ServiceBusNotificationsChannel\\Tests\\": "tests"
+            "Ringierimu\\ServiceBusNotificationsChannel\\Tests\\": "tests/"
         },
         "files": [
             "tests/helpers.php"
