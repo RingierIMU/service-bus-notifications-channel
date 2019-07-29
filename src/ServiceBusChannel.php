@@ -2,7 +2,6 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
-use function Couchbase\defaultDecoder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -147,4 +146,3 @@ class ServiceBusChannel
         return $endpoint;
     }
 }
-

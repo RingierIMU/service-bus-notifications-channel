@@ -42,7 +42,7 @@ class ServiceBusChannelTest extends TestCase
 
         $serviceChannel->send(new AnonymousNotifiable(), new TestNotification());
     }
-    
+
     /**
      * Mock classes, facades and everything else needed.
      */

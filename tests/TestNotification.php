@@ -8,8 +8,7 @@ use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 
 /**
- * Class TestNotification
- * @package Ringierimu\ServiceBusNotificationsChannel\Tests
+ * Class TestNotification.
  */
 class TestNotification extends Notification
 {
