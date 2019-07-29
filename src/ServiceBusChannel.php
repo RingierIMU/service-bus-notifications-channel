@@ -5,7 +5,6 @@ namespace Ringierimu\ServiceBusNotificationsChannel;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -28,8 +27,6 @@ class ServiceBusChannel
 
     /**
      * ServiceBusChannel constructor.
-     *
-     * @throws BindingResolutionException
      */
     public function __construct()
     {
@@ -87,8 +84,8 @@ class ServiceBusChannel
 
                 if (!$this->hasAttemptedLogin) {
                     // redo the call which will now redo the login //
-                    $this->send($notifiable, $notification);
                     $this->hasAttemptedLogin = true;
+                    $this->send($notifiable, $notification);
                 } else {
                     $this->hasAttemptedLogin = false;
 
@@ -101,7 +98,6 @@ class ServiceBusChannel
     }
 
     /**
-     * @throws BindingResolutionException
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      *

@@ -1,6 +1,6 @@
 <?php
 
-namespace NotificationChannels\ServiceBusNotificationsChannel\Tests;
+namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
 use Carbon\Carbon;
 use PHPUnit\Framework\TestCase;
@@ -13,14 +13,14 @@ use Throwable;
  */
 class ServiceBusEventTest extends TestCase
 {
-    public function testShouldCreateServiceBusChannelInstance()
+    public function testShouldCreateServiceBusEventInstance()
     {
         $serviceBus = new ServiceBusEvent('test');
 
         $this->assertEquals('test', $serviceBus->getEventType());
     }
 
-    public function testShouldCreateServiceBusChannelInstanceViaStaticCall()
+    public function testShouldCreateServiceBusEventInstanceViaStaticCall()
     {
         $serviceBus = ServiceBusEvent::create('test');
 

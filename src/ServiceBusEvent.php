@@ -3,7 +3,6 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
@@ -175,8 +174,6 @@ class ServiceBusEvent
 
     /**
      * Returns the culture to be use, will use config services.service_bus.culture if not set on the event.
-     *
-     * @throws BindingResolutionException
      *
      * @return string
      */
