@@ -2,6 +2,7 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
+use function Couchbase\defaultDecoder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -84,8 +85,8 @@ class ServiceBusChannel
 
                 if (!$this->hasAttemptedLogin) {
                     // redo the call which will now redo the login //
-                    $this->send($notifiable, $notification);
                     $this->hasAttemptedLogin = true;
+                    $this->send($notifiable, $notification);
                 } else {
                     $this->hasAttemptedLogin = false;
 
@@ -125,7 +126,7 @@ class ServiceBusChannel
                 $token = $json->token;
 
                 // there is no timeout on tokens, so cache it forever //
-                Cache::forever(self::CACHE_KEY_TOKEN, $token);
+                Cache::forever('service-bus-token', $token);
 
                 Log::info('Token received', ['tag' => 'ServiceBus']);
             } catch (RequestException $exception) {
@@ -146,3 +147,4 @@ class ServiceBusChannel
         return $endpoint;
     }
 }
+
