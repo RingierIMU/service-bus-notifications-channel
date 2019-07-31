@@ -62,15 +62,17 @@ class ServiceBusChannel
         $token = $this->getToken();
 
         $headers = [
-            'x-api-key' => $token,
+            'Accept'        => 'application/json',
+            'Content-type'  => 'application/json',
+            'x-api-key'     => $token,
         ];
 
         try {
-            $this->client->post(
+            $this->client->request('POST',
                 $this->getUrl('events'),
                 [
-                    'headers'     => $headers,
-                    'form_params' => $params,
+                    'headers'   => $headers,
+                    'json'      => [$params],
                 ]
             );
 
