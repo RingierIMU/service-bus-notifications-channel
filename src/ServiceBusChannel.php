@@ -148,4 +148,3 @@ class ServiceBusChannel
         return $endpoint;
     }
 }
-
