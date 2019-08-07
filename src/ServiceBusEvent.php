@@ -159,14 +159,13 @@ class ServiceBusEvent
     }
 
     /**
-     * @param string $payloadName
-     * @param array  $payload
+     * @param array $payload
      *
      * @return $this
      */
-    public function withPayload(string $payloadName, array $payload)
+    public function withPayload(array $payload)
     {
-        $this->payload[$payloadName] = $payload;
+        $this->payload = $payload;
 
         return $this;
     }

@@ -81,9 +81,11 @@ class ServiceBusEventTest extends TestCase
     public function testShouldAllocateAttributesToServiceBusObjectWithPayload()
     {
         $payload = [
-            'user'  => 'John Doe',
-            'email' => 'john@doe.com',
-            'phone' => '0123456789',
+            'object' => [
+                'user'  => 'John Doe',
+                'email' => 'john@doe.com',
+                'phone' => '0123456789',
+            ]
         ];
 
         $serviceBus = ServiceBusEvent::create('test')
@@ -92,16 +94,15 @@ class ServiceBusEventTest extends TestCase
             ->withReference(uniqid())
             ->withRoute('api')
             ->createdAt(Carbon::now())
-            ->withPayload('object', $payload);
+            ->withPayload($payload);
 
         $serviceBusData = $serviceBus->getParams();
 
         $this->assertNotEmpty($serviceBusData);
         $this->assertArrayHasKey('events', $serviceBusData);
         $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertArrayHasKey('object', $serviceBusData['payload']);
         $this->assertContains('test', $serviceBusData['events']);
 
-        $this->assertEquals($payload, $serviceBusData['payload']['object']);
+        $this->assertEquals($payload, $serviceBusData['payload']);
     }
 }
