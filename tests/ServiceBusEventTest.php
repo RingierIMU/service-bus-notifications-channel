@@ -49,22 +49,60 @@ class ServiceBusEventTest extends TestCase
      */
     public function testShouldAllocateAttributesToServiceBusObject()
     {
+        $resource = [
+            'user'  => 'John Doe',
+            'email' => 'john@doe.com',
+            'phone' => '0123456789',
+        ];
+
         $serviceBus = ServiceBusEvent::create('test')
             ->withAction('other', uniqid())
             ->withCulture('en')
             ->withReference(uniqid())
             ->withRoute('api')
             ->createdAt(Carbon::now())
-            ->withResources('resources', ['data']);
+            ->withResources('resource', $resource);
 
         $serviceBusData = $serviceBus->getParams();
 
         $this->assertNotEmpty($serviceBusData);
         $this->assertArrayHasKey('events', $serviceBusData);
         $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertArrayHasKey('resources', $serviceBusData['payload']);
+        $this->assertArrayHasKey('resource', $serviceBusData['payload']);
         $this->assertContains('test', $serviceBusData['events']);
 
-        $this->assertEquals([['data']], $serviceBusData['payload']['resources']);
+        $this->assertEquals([$resource], $serviceBusData['payload']['resource']);
+    }
+
+    /**
+     * @throws InvalidConfigException
+     * @throws Throwable
+     */
+    public function testShouldAllocateAttributesToServiceBusObjectWithPayload()
+    {
+        $payload = [
+            'object' => [
+                'user'  => 'John Doe',
+                'email' => 'john@doe.com',
+                'phone' => '0123456789',
+            ],
+        ];
+
+        $serviceBus = ServiceBusEvent::create('test')
+            ->withAction('other', uniqid())
+            ->withCulture('en')
+            ->withReference(uniqid())
+            ->withRoute('api')
+            ->createdAt(Carbon::now())
+            ->withPayload($payload);
+
+        $serviceBusData = $serviceBus->getParams();
+
+        $this->assertNotEmpty($serviceBusData);
+        $this->assertArrayHasKey('events', $serviceBusData);
+        $this->assertArrayHasKey('payload', $serviceBusData);
+        $this->assertContains('test', $serviceBusData['events']);
+
+        $this->assertEquals($payload, $serviceBusData['payload']);
     }
 }
