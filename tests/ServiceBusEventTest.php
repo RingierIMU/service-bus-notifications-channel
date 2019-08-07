@@ -65,6 +65,6 @@ class ServiceBusEventTest extends TestCase
         $this->assertArrayHasKey('resources', $serviceBusData['payload']);
         $this->assertContains('test', $serviceBusData['events']);
 
-        $this->assertEquals([['data']], $serviceBusData['payload']['resources']);
+        $this->assertEquals(['data'], $serviceBusData['payload']['resources']);
     }
 }
