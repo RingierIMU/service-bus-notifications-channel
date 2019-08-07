@@ -85,7 +85,7 @@ class ServiceBusEventTest extends TestCase
                 'user'  => 'John Doe',
                 'email' => 'john@doe.com',
                 'phone' => '0123456789',
-            ]
+            ],
         ];
 
         $serviceBus = ServiceBusEvent::create('test')
