@@ -159,6 +159,18 @@ class ServiceBusEvent
     }
 
     /**
+     * @param string $payloadName
+     * @param array $payload
+     * @return $this
+     */
+    public function withPayload(string $payloadName, array $payload)
+    {
+        $this->payload[$payloadName] = $payload;
+
+        return $this;
+    }
+
+    /**
      * Date time of the event creation on the event source in ISO8601/RFC3339 format.
      *
      * @param Carbon $createdAtDate
