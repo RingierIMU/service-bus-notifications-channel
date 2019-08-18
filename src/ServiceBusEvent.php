@@ -247,7 +247,7 @@ class ServiceBusEvent
             'events'            => [$this->eventType],
             'venture_reference' => $this->getVentureReference(),
             'venture_config_id' => config('services.service_bus.venture_config_id'),
-            'created_at'        => $this->createdAt ? $this->createdAt->toDateTimeString() : Carbon::now()->toDateTimeString(),
+            'created_at'        => $this->createdAt ? $this->createdAt->toIso8601String() : Carbon::now()->toIso8601String(),
             'culture'           => $this->getCulture(),
             'action_type'       => $this->actionType,
             'action_reference'  => $this->actionReference,
