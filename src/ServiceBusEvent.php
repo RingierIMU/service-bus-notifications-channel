@@ -46,7 +46,7 @@ class ServiceBusEvent
      * ServiceBusEvent constructor.
      *
      * @param string $eventType
-     * @param array $ventureConfig
+     * @param array  $ventureConfig
      */
     public function __construct(string $eventType, array $ventureConfig = [])
     {
@@ -71,7 +71,7 @@ class ServiceBusEvent
      * - services.service_bus.version
      *
      * @param string $eventType
-     * @param array $ventureConfig
+     * @param array  $ventureConfig
      *
      * @return ServiceBusEvent
      */
