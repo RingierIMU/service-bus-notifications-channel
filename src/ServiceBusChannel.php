@@ -22,16 +22,29 @@ class ServiceBusChannel
     private $client;
     protected $hasAttemptedLogin = false;
     protected $useStaging = false;
-
-    const CACHE_KEY_TOKEN = 'service-bus-token';
+    protected $ventureConfig = [];
 
     /**
      * ServiceBusChannel constructor.
+     *
+     * @param array $ventureConfig
      */
-    public function __construct()
+    public function __construct(array $ventureConfig = [])
     {
+        $ventureConfigVars = [
+            'services.service_bus.username',
+            'services.service_bus.password',
+            'services.service_bus.venture_config_id',
+            'services.service_bus.enabled',
+            'services.service_bus.endpoint',
+        ];
+
+        foreach ($ventureConfigVars as $name) {
+            $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
+        }
+
         $this->client = new Client([
-            'base_uri' => config('services.service_bus.endpoint'),
+            'base_uri' => $this->ventureConfig['services.service_bus.endpoint'],
         ]);
     }
 
@@ -52,7 +65,7 @@ class ServiceBusChannel
 
         $params = $event->getParams();
 
-        if (config('services.service_bus.enabled') == false) {
+        if ($this->ventureConfig['services.service_bus.enabled'] == false) {
             Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus']);
             Log::debug(print_r($params, true), ['tag' => 'ServiceBus']);
 
@@ -82,7 +95,7 @@ class ServiceBusChannel
                 Log::info('403 received. Logging in and retrying', ['tag' => 'ServiceBus']);
 
                 // clear the invalid token //
-                Cache::forget(self::CACHE_KEY_TOKEN);
+                Cache::forget($this->generateTokenKey());
 
                 if (!$this->hasAttemptedLogin) {
                     // redo the call which will now redo the login //
@@ -107,7 +120,7 @@ class ServiceBusChannel
      */
     private function getToken(): string
     {
-        $token = Cache::get(self::CACHE_KEY_TOKEN);
+        $token = Cache::get($this->generateTokenKey());
 
         if (empty($token)) {
             try {
@@ -115,9 +128,9 @@ class ServiceBusChannel
                     $this->getUrl('login'),
                     [
                         'json' => [
-                            'username'          => config('services.service_bus.username'),
-                            'password'          => config('services.service_bus.password'),
-                            'venture_config_id' => config('services.service_bus.venture_config_id'),
+                            'username'          => $this->ventureConfig['services.service_bus.username'],
+                            'password'          => $this->ventureConfig['services.service_bus.password'],
+                            'venture_config_id' => $this->ventureConfig['services.service_bus.venture_config_id'],
                         ],
                     ]
                 )->getBody();
@@ -127,7 +140,7 @@ class ServiceBusChannel
                 $token = $json->token;
 
                 // there is no timeout on tokens, so cache it forever //
-                Cache::forever('service-bus-token', $token);
+                Cache::forever($this->generateTokenKey(), $token);
 
                 Log::info('Token received', ['tag' => 'ServiceBus']);
             } catch (RequestException $exception) {
@@ -146,5 +159,13 @@ class ServiceBusChannel
     private function getUrl($endpoint): string
     {
         return $endpoint;
+    }
+
+    public function generateTokenKey()
+    {
+        return md5(
+            'service-bus-token'.
+            $this->ventureConfig['services.service_bus.venture_config_id']
+        );
     }
 }

@@ -40,15 +40,27 @@ class ServiceBusEvent
     protected $createdAt;
     protected $payload;
     protected $route;
+    protected $ventureConfig = [];
 
     /**
      * ServiceBusEvent constructor.
      *
      * @param string $eventType
+     * @param array $ventureConfig
      */
-    public function __construct(string $eventType)
+    public function __construct(string $eventType, array $ventureConfig = [])
     {
         $this->eventType = $eventType;
+
+        $ventureConfigVars = [
+            'services.service_bus.venture_config_id',
+            'services.service_bus.version',
+            'services.service_bus.culture',
+        ];
+
+        foreach ($ventureConfigVars as $name) {
+            $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
+        }
     }
 
     /**
@@ -59,12 +71,13 @@ class ServiceBusEvent
      * - services.service_bus.version
      *
      * @param string $eventType
+     * @param array $ventureConfig
      *
      * @return ServiceBusEvent
      */
-    public static function create(string $eventType): self
+    public static function create(string $eventType, array $ventureConfig = []): self
     {
-        return new static($eventType);
+        return new static($eventType, $ventureConfig);
     }
 
     /**
@@ -191,7 +204,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? config('services.service_bus.culture');
+        return $this->culture ?? $this->ventureConfig['services.service_bus.culture'];
     }
 
     /**
@@ -246,12 +259,12 @@ class ServiceBusEvent
         return [
             'events'            => [$this->eventType],
             'venture_reference' => $this->getVentureReference(),
-            'venture_config_id' => config('services.service_bus.venture_config_id'),
+            'venture_config_id' => $this->ventureConfig['services.service_bus.venture_config_id'],
             'created_at'        => $this->createdAt ? $this->createdAt->toIso8601String() : Carbon::now()->toIso8601String(),
             'culture'           => $this->getCulture(),
             'action_type'       => $this->actionType,
             'action_reference'  => $this->actionReference,
-            'version'           => config('services.service_bus.version'),
+            'version'           => $this->ventureConfig['services.service_bus.version'],
             'route'             => $this->route,
             'payload'           => $this->getPayload(),
         ];
