@@ -50,7 +50,7 @@ class ServiceBusChannelTest extends TestCase
     {
         Cache::shouldReceive('get')
             ->once()
-            ->with(ServiceBusChannel::CACHE_KEY_TOKEN)
+            ->with((new ServiceBusChannel())->generateTokenKey())
             ->andReturn('value');
 
         Log::shouldReceive('debug')
