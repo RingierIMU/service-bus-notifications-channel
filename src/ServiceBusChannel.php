@@ -25,30 +25,6 @@ class ServiceBusChannel
     protected $ventureConfig = [];
 
     /**
-     * ServiceBusChannel constructor.
-     *
-     * @param array $ventureConfig
-     */
-    public function __construct(array $ventureConfig = [])
-    {
-        $ventureConfigVars = [
-            'services.service_bus.username',
-            'services.service_bus.password',
-            'services.service_bus.venture_config_id',
-            'services.service_bus.enabled',
-            'services.service_bus.endpoint',
-        ];
-
-        foreach ($ventureConfigVars as $name) {
-            $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
-        }
-
-        $this->client = new Client([
-            'base_uri' => $this->ventureConfig['services.service_bus.endpoint'],
-        ]);
-    }
-
-    /**
      * Send the given notification.
      *
      * @param mixed        $notifiable
@@ -60,6 +36,8 @@ class ServiceBusChannel
      */
     public function send($notifiable, Notification $notification)
     {
+        $this->setVentureConfig($notification);
+
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
 
@@ -71,6 +49,10 @@ class ServiceBusChannel
 
             return;
         }
+
+        $this->client = new Client([
+            'base_uri' => $this->ventureConfig['services.service_bus.endpoint'],
+        ]);
 
         $token = $this->getToken();
 
@@ -163,9 +145,32 @@ class ServiceBusChannel
 
     public function generateTokenKey()
     {
+        if (empty($ventureConfig)) {
+            $this->setVentureConfig();
+        }
+
         return md5(
             'service-bus-token'.
             $this->ventureConfig['services.service_bus.venture_config_id']
         );
+    }
+
+    /**
+     * @param Notification $notification
+     */
+    private function setVentureConfig($notification = null)
+    {
+        $ventureConfigVars = [
+            'services.service_bus.username',
+            'services.service_bus.password',
+            'services.service_bus.venture_config_id',
+            'services.service_bus.enabled',
+            'services.service_bus.endpoint',
+        ];
+
+        foreach ($ventureConfigVars as $name) {
+            $this->ventureConfig[$name] = isset($notification->config) && isset($notification->config[$name])
+                ? $notification->config[$name] : config($name);
+        }
     }
 }
