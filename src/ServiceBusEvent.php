@@ -3,7 +3,6 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
