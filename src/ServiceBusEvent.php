@@ -240,11 +240,7 @@ class ServiceBusEvent
      */
     private function generateUUID(string $key): string
     {
-        $uuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'php.net');
-
-        Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid->toString(), 'key' => $key]);
-
-        return $uuid->toString();
+        return Uuid::uuid5(Uuid::NAMESPACE_DNS, 'php.net')->toString();
     }
 
     /**
