@@ -215,7 +215,7 @@ class ServiceBusEvent
      */
     protected function getVentureReference(): string
     {
-        return $this->ventureReference ?? $this->generateUUID('venture_reference');
+        return $this->ventureReference ?? $this->generateUUID();
     }
 
     /**
@@ -231,15 +231,13 @@ class ServiceBusEvent
     /**
      * Generates a v4 UUID.
      *
-     * @param string $key
-     *
      * @throws Throwable
      *
      * @return string
      */
-    private function generateUUID(string $key): string
+    private function generateUUID(): string
     {
-        return Uuid::uuid5(Uuid::NAMESPACE_DNS, 'php.net')->toString();
+        return Uuid::uuid4()->toString();
     }
 
     /**
