@@ -60,6 +60,8 @@ class ServiceBusEvent
         foreach ($ventureConfigVars as $name) {
             $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
         }
+
+        $this->ventureReference = $this->generateUUID();
     }
 
     /**
@@ -207,18 +209,6 @@ class ServiceBusEvent
     }
 
     /**
-     * Get the venture reference, will generate a UUID if not set on the event.
-     *
-     * @throws Throwable
-     *
-     * @return string
-     */
-    protected function getVentureReference(): string
-    {
-        return $this->ventureReference ?? $this->generateUUID();
-    }
-
-    /**
      * Gets the extra data to be sent as the payload param.
      *
      * @return array
@@ -251,7 +241,7 @@ class ServiceBusEvent
     {
         return [
             'events'            => [$this->eventType],
-            'venture_reference' => $this->getVentureReference(),
+            'venture_reference' => $this->ventureReference,
             'venture_config_id' => $this->ventureConfig['services.service_bus.venture_config_id'],
             'created_at'        => $this->createdAt ? $this->createdAt->toIso8601String() : Carbon::now()->toIso8601String(),
             'culture'           => $this->getCulture(),
