@@ -3,7 +3,6 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
@@ -216,7 +215,7 @@ class ServiceBusEvent
      */
     protected function getVentureReference(): string
     {
-        return $this->ventureReference ?? $this->generateUUID('venture_reference');
+        return $this->ventureReference ?? $this->generateUUID();
     }
 
     /**
@@ -232,19 +231,13 @@ class ServiceBusEvent
     /**
      * Generates a v4 UUID.
      *
-     * @param string $key
-     *
      * @throws Throwable
      *
      * @return string
      */
-    private function generateUUID(string $key): string
+    private function generateUUID(): string
     {
-        $uuid = Uuid::uuid5(Uuid::NAMESPACE_DNS, 'php.net');
-
-        Log::info('Generating UUID', ['tag' => 'ServiceBus', 'id' => $uuid->toString(), 'key' => $key]);
-
-        return $uuid->toString();
+        return Uuid::uuid4()->toString();
     }
 
     /**
