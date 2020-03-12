@@ -69,7 +69,7 @@ class ServiceBusChannel
             Log::info(
                 'Service Bus disabled, event discarded',
                 [
-                    'tag' => 'ServiceBus',
+                    'tag'    => 'ServiceBus',
                     'params' => $params,
                 ]
             );
@@ -80,9 +80,9 @@ class ServiceBusChannel
         $token = $this->getToken();
 
         $headers = [
-            'Accept'        => 'application/json',
-            'Content-type'  => 'application/json',
-            'x-api-key'     => $token,
+            'Accept'       => 'application/json',
+            'Content-type' => 'application/json',
+            'x-api-key'    => $token,
         ];
 
         try {
@@ -90,15 +90,15 @@ class ServiceBusChannel
                 'POST',
                 $this->getUrl('events'),
                 [
-                    'headers'   => $headers,
-                    'json'      => [$params],
+                    'headers' => $headers,
+                    'json'    => [$params],
                 ]
             );
 
             Log::info(
                 'Notification sent',
                 [
-                    'tag' => 'ServiceBus',
+                    'tag'   => 'ServiceBus',
                     'event' => $event->getEventType(),
                 ]
             );
