@@ -86,7 +86,8 @@ class ServiceBusChannel
         ];
 
         try {
-            $this->client->request('POST',
+            $this->client->request(
+                'POST',
                 $this->getUrl('events'),
                 [
                     'headers'   => $headers,
@@ -140,7 +141,8 @@ class ServiceBusChannel
 
         if (empty($token)) {
             try {
-                $body = $this->client->request('POST',
+                $body = $this->client->request(
+                    'POST',
                     $this->getUrl('login'),
                     [
                         'json' => [
