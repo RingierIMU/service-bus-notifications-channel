@@ -66,8 +66,7 @@ class ServiceBusChannel
         $params = $event->getParams();
 
         if ($this->ventureConfig['services.service_bus.enabled'] == false) {
-            Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus']);
-            Log::debug(print_r($params, true), ['tag' => 'ServiceBus']);
+            Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus', 'params' => $params]);
 
             return;
         }
