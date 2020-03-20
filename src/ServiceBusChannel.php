@@ -66,8 +66,13 @@ class ServiceBusChannel
         $params = $event->getParams();
 
         if ($this->ventureConfig['services.service_bus.enabled'] == false) {
-            Log::info('Service Bus disabled, event discarded', ['tag' => 'ServiceBus']);
-            Log::debug(print_r($params, true), ['tag' => 'ServiceBus']);
+            Log::info(
+                'Service Bus disabled, event discarded',
+                [
+                    'tag'    => 'ServiceBus',
+                    'params' => $params,
+                ]
+            );
 
             return;
         }
@@ -75,24 +80,36 @@ class ServiceBusChannel
         $token = $this->getToken();
 
         $headers = [
-            'Accept'        => 'application/json',
-            'Content-type'  => 'application/json',
-            'x-api-key'     => $token,
+            'Accept'       => 'application/json',
+            'Content-type' => 'application/json',
+            'x-api-key'    => $token,
         ];
 
         try {
-            $this->client->request('POST',
+            $this->client->request(
+                'POST',
                 $this->getUrl('events'),
                 [
-                    'headers'   => $headers,
-                    'json'      => [$params],
+                    'headers' => $headers,
+                    'json'    => [$params],
                 ]
             );
 
-            Log::info('Notification sent', ['tag' => 'ServiceBus', 'event' => $event->getEventType()]);
+            Log::info(
+                'Notification sent',
+                [
+                    'tag'   => 'ServiceBus',
+                    'event' => $event->getEventType(),
+                ]
+            );
         } catch (RequestException $exception) {
             if ($exception->getCode() == '403') {
-                Log::info('403 received. Logging in and retrying', ['tag' => 'ServiceBus']);
+                Log::info(
+                    '403 received. Logging in and retrying',
+                    [
+                        'tag' => 'ServiceBus',
+                    ]
+                );
 
                 // clear the invalid token //
                 Cache::forget($this->generateTokenKey());
@@ -124,7 +141,8 @@ class ServiceBusChannel
 
         if (empty($token)) {
             try {
-                $body = $this->client->request('POST',
+                $body = $this->client->request(
+                    'POST',
                     $this->getUrl('login'),
                     [
                         'json' => [
@@ -142,7 +160,12 @@ class ServiceBusChannel
                 // there is no timeout on tokens, so cache it forever //
                 Cache::forever($this->generateTokenKey(), $token);
 
-                Log::info('Token received', ['tag' => 'ServiceBus']);
+                Log::info(
+                    'Token received',
+                    [
+                        'tag' => 'ServiceBus',
+                    ]
+                );
             } catch (RequestException $exception) {
                 throw CouldNotSendNotification::requestFailed($exception);
             }
