@@ -98,8 +98,9 @@ class ServiceBusChannel
             Log::info(
                 'Notification sent',
                 [
-                    'tag'   => 'ServiceBus',
-                    'event' => $event->getEventType(),
+                    'tag'    => 'ServiceBus',
+                    'event'  => $event->getEventType(),
+                    'params' => $params,
                 ]
             );
         } catch (RequestException $exception) {
@@ -159,13 +160,6 @@ class ServiceBusChannel
 
                 // there is no timeout on tokens, so cache it forever //
                 Cache::forever($this->generateTokenKey(), $token);
-
-                Log::info(
-                    'Token received',
-                    [
-                        'tag' => 'ServiceBus',
-                    ]
-                );
             } catch (RequestException $exception) {
                 throw CouldNotSendNotification::requestFailed($exception);
             }
