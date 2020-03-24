@@ -98,8 +98,8 @@ class ServiceBusChannel
             Log::info(
                 'Notification sent',
                 [
-                    'tag'   => 'ServiceBus',
-                    'event' => $event->getEventType(),
+                    'tag'    => 'ServiceBus',
+                    'event'  => $event->getEventType(),
                     'params' => $params,
                 ]
             );
