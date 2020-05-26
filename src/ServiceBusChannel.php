@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
@@ -66,8 +67,14 @@ class ServiceBusChannel
         $params = $event->getParams();
 
         if ($this->ventureConfig['services.service_bus.enabled'] == false) {
+            $event = Arr::get($params, 'events.0');
+
+            $message = $event
+                ? "$event service bus event [disabled]"
+                : 'Service bus event [disabled]';
+
             Log::info(
-                'Service Bus disabled, event discarded',
+                $message,
                 [
                     'tag'    => 'ServiceBus',
                     'params' => $params,
