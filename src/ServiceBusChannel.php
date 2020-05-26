@@ -66,7 +66,7 @@ class ServiceBusChannel
         $params = $event->getParams();
 
         if ($this->ventureConfig['services.service_bus.enabled'] == false) {
-            $message = Arr::get($params, 'events.0', 'Service Bus event') . ' [disabled]';
+            $message = Arr::get($params, 'events.0', 'Service Bus event').' [disabled]';
 
             Log::info(
                 $message,
