@@ -6,7 +6,6 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
@@ -63,21 +62,16 @@ class ServiceBusChannel
     {
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
-
+        $eventType = $event->getEventType();
         $params = $event->getParams();
 
         if ($this->ventureConfig['services.service_bus.enabled'] == false) {
-            $event = Arr::get($params, 'events.0');
-
-            $message = $event
-                ? "$event service bus event [disabled]"
-                : 'Service bus event [disabled]';
-
             Log::info(
-                $message,
+                "$eventType service bus notification [disabled]",
                 [
-                    'tag'    => 'ServiceBus',
+                    'event'  => $eventType,
                     'params' => $params,
+                    'tag'    => 'ServiceBus',
                 ]
             );
 
@@ -103,11 +97,11 @@ class ServiceBusChannel
             );
 
             Log::info(
-                'Notification sent',
+                "$eventType service bus notification",
                 [
-                    'tag'    => 'ServiceBus',
-                    'event'  => $event->getEventType(),
+                    'event'  => $eventType,
                     'params' => $params,
+                    'tag'    => 'ServiceBus',
                 ]
             );
         } catch (RequestException $exception) {
@@ -115,7 +109,9 @@ class ServiceBusChannel
                 Log::info(
                     '403 received. Logging in and retrying',
                     [
-                        'tag' => 'ServiceBus',
+                        'event'  => $eventType,
+                        'params' => $params,
+                        'tag'    => 'ServiceBus',
                     ]
                 );
 
