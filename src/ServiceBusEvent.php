@@ -196,7 +196,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? $this->ventureConfig['services.service_bus.culture'];
+        return $this->culture ?? $this->ventureConfig['culture'];
     }
 
     /**
