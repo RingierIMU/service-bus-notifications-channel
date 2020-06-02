@@ -231,16 +231,16 @@ class ServiceBusEvent
     public function getParams(): array
     {
         return [
-            'events'            => [$this->eventType],
+            'events' => [$this->eventType],
             'venture_reference' => $this->ventureReference,
             'venture_config_id' => $this->ventureConfig['venture_config_id'],
-            'created_at'        => $this->createdAt->toIso8601String(),
-            'culture'           => $this->getCulture(),
-            'action_type'       => $this->actionType,
-            'action_reference'  => $this->actionReference,
-            'version'           => $this->ventureConfig['version'],
-            'route'             => $this->route,
-            'payload'           => $this->getPayload(),
+            'created_at' => $this->createdAt->toIso8601String(),
+            'culture' => $this->getCulture(),
+            'action_type' => $this->actionType,
+            'action_reference' => $this->actionReference,
+            'version' => $this->ventureConfig['version'],
+            'route' => $this->route,
+            'payload' => $this->getPayload(),
         ];
     }
 
