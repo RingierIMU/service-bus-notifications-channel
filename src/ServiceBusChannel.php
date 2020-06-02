@@ -64,9 +64,9 @@ class ServiceBusChannel
                 Log::debug(
                     "$eventType service bus notification [disabled]",
                     [
-                        'event'  => $eventType,
+                        'event' => $eventType,
                         'params' => $params,
-                        'tags'    => [
+                        'tags' => [
                             'service-bus',
                         ],
                     ]
@@ -79,9 +79,9 @@ class ServiceBusChannel
         $token = $this->getToken();
 
         $headers = [
-            'Accept'       => 'application/json',
+            'Accept' => 'application/json',
             'Content-type' => 'application/json',
-            'x-api-key'    => $token,
+            'x-api-key' => $token,
         ];
 
         try {
@@ -90,7 +90,7 @@ class ServiceBusChannel
                 $this->getUrl('events'),
                 [
                     'headers' => $headers,
-                    'json'    => [$params],
+                    'json' => [$params],
                 ]
             );
 
@@ -98,9 +98,9 @@ class ServiceBusChannel
                 Log::debug(
                     "$eventType service bus notification",
                     [
-                        'event'  => $eventType,
+                        'event' => $eventType,
                         'params' => $params,
-                        'tags'    => [
+                        'tags' => [
                             'service-bus',
                         ],
                     ]
@@ -111,9 +111,9 @@ class ServiceBusChannel
                 Log::warning(
                     '403 received. Logging in and retrying',
                     [
-                        'event'  => $eventType,
+                        'event' => $eventType,
                         'params' => $params,
-                        'tags'    => [
+                        'tags' => [
                             'service-bus',
                         ],
                     ]
@@ -184,7 +184,7 @@ class ServiceBusChannel
     public function generateTokenKey()
     {
         return md5(
-            'service-bus-token'.
+            'service-bus-token' .
             Arr::get($this->ventureConfig, 'venture_config_id')
         );
     }
