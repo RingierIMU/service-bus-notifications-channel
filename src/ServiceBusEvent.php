@@ -2,7 +2,7 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
