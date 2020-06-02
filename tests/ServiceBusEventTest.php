@@ -50,7 +50,7 @@ class ServiceBusEventTest extends TestCase
     public function testShouldAllocateAttributesToServiceBusObject()
     {
         $resource = [
-            'user'  => 'John Doe',
+            'user' => 'John Doe',
             'email' => 'john@doe.com',
             'phone' => '0123456789',
         ];
@@ -82,7 +82,7 @@ class ServiceBusEventTest extends TestCase
     {
         $payload = [
             'object' => [
-                'user'  => 'John Doe',
+                'user' => 'John Doe',
                 'email' => 'john@doe.com',
                 'phone' => '0123456789',
             ],
