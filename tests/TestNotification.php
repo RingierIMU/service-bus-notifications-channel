@@ -2,7 +2,7 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Notifications\Notification;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
