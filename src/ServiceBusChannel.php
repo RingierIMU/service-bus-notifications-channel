@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
@@ -31,21 +32,13 @@ class ServiceBusChannel
      */
     public function __construct(array $ventureConfig = [])
     {
-        $ventureConfigVars = [
-            'services.service_bus.username',
-            'services.service_bus.password',
-            'services.service_bus.venture_config_id',
-            'services.service_bus.enabled',
-            'services.service_bus.endpoint',
-        ];
+        $this->ventureConfig = $ventureConfig ?: config('services.service_bus');
 
-        foreach ($ventureConfigVars as $name) {
-            $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
-        }
-
-        $this->client = new Client([
-            'base_uri' => $this->ventureConfig['services.service_bus.endpoint'],
-        ]);
+        $this->client = new Client(
+            [
+                'base_uri' => Arr::get($this->ventureConfig, 'endpoint'),
+            ]
+        );
     }
 
     /**
@@ -64,16 +57,21 @@ class ServiceBusChannel
         $event = $notification->toServiceBus($notifiable);
         $eventType = $event->getEventType();
         $params = $event->getParams();
+        $dontReport = Arr::get($this->ventureConfig, 'dont_report', []);
 
-        if ($this->ventureConfig['services.service_bus.enabled'] == false) {
-            Log::info(
-                "$eventType service bus notification [disabled]",
-                [
-                    'event'  => $eventType,
-                    'params' => $params,
-                    'tag'    => 'ServiceBus',
-                ]
-            );
+        if (Arr::get($this->ventureConfig, 'enabled') == false) {
+            if (!in_array($eventType, $dontReport)) {
+                Log::debug(
+                    "$eventType service bus notification [disabled]",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'tags' => [
+                            'service-bus',
+                        ],
+                    ]
+                );
+            }
 
             return;
         }
@@ -81,9 +79,9 @@ class ServiceBusChannel
         $token = $this->getToken();
 
         $headers = [
-            'Accept'       => 'application/json',
+            'Accept' => 'application/json',
             'Content-type' => 'application/json',
-            'x-api-key'    => $token,
+            'x-api-key' => $token,
         ];
 
         try {
@@ -92,26 +90,32 @@ class ServiceBusChannel
                 $this->getUrl('events'),
                 [
                     'headers' => $headers,
-                    'json'    => [$params],
+                    'json' => [$params],
                 ]
             );
 
-            Log::info(
-                "$eventType service bus notification",
-                [
-                    'event'  => $eventType,
-                    'params' => $params,
-                    'tag'    => 'ServiceBus',
-                ]
-            );
+            if (!in_array($eventType, $dontReport)) {
+                Log::debug(
+                    "$eventType service bus notification",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'tags' => [
+                            'service-bus',
+                        ],
+                    ]
+                );
+            }
         } catch (RequestException $exception) {
             if ($exception->getCode() == '403') {
-                Log::info(
+                Log::warning(
                     '403 received. Logging in and retrying',
                     [
-                        'event'  => $eventType,
+                        'event' => $eventType,
                         'params' => $params,
-                        'tag'    => 'ServiceBus',
+                        'tags' => [
+                            'service-bus',
+                        ],
                     ]
                 );
 
@@ -149,11 +153,7 @@ class ServiceBusChannel
                     'POST',
                     $this->getUrl('login'),
                     [
-                        'json' => [
-                            'username'          => $this->ventureConfig['services.service_bus.username'],
-                            'password'          => $this->ventureConfig['services.service_bus.password'],
-                            'venture_config_id' => $this->ventureConfig['services.service_bus.venture_config_id'],
-                        ],
+                        'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
                     ]
                 )->getBody();
 
@@ -184,8 +184,8 @@ class ServiceBusChannel
     public function generateTokenKey()
     {
         return md5(
-            'service-bus-token'.
-            $this->ventureConfig['services.service_bus.venture_config_id']
+            'service-bus-token' .
+            Arr::get($this->ventureConfig, 'venture_config_id')
         );
     }
 }

@@ -50,17 +50,7 @@ class ServiceBusEvent
     public function __construct(string $eventType, array $ventureConfig = [])
     {
         $this->eventType = $eventType;
-
-        $ventureConfigVars = [
-            'services.service_bus.venture_config_id',
-            'services.service_bus.version',
-            'services.service_bus.culture',
-        ];
-
-        foreach ($ventureConfigVars as $name) {
-            $this->ventureConfig[$name] = isset($ventureConfig[$name]) ? $ventureConfig[$name] : config($name);
-        }
-
+        $this->ventureConfig = $ventureConfig ?: config('services.service_bus');
         $this->createdAt = Carbon::now();
         $this->ventureReference = $this->generateUUID();
     }
@@ -134,7 +124,7 @@ class ServiceBusEvent
             $this->actionType = $type;
             $this->actionReference = $reference;
         } else {
-            throw new InvalidConfigException('Action type must be on of the following: '.print_r(self::$actionTypes, true));
+            throw new InvalidConfigException('Action type must be on of the following: ' . print_r(self::$actionTypes, true));
         }
 
         return $this;
@@ -206,7 +196,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? $this->ventureConfig['services.service_bus.culture'];
+        return $this->culture ?? $this->ventureConfig['culture'];
     }
 
     /**
@@ -241,16 +231,16 @@ class ServiceBusEvent
     public function getParams(): array
     {
         return [
-            'events'            => [$this->eventType],
+            'events' => [$this->eventType],
             'venture_reference' => $this->ventureReference,
-            'venture_config_id' => $this->ventureConfig['services.service_bus.venture_config_id'],
-            'created_at'        => $this->createdAt->toIso8601String(),
-            'culture'           => $this->getCulture(),
-            'action_type'       => $this->actionType,
-            'action_reference'  => $this->actionReference,
-            'version'           => $this->ventureConfig['services.service_bus.version'],
-            'route'             => $this->route,
-            'payload'           => $this->getPayload(),
+            'venture_config_id' => $this->ventureConfig['venture_config_id'],
+            'created_at' => $this->createdAt->toIso8601String(),
+            'culture' => $this->getCulture(),
+            'action_type' => $this->actionType,
+            'action_reference' => $this->actionReference,
+            'version' => $this->ventureConfig['version'],
+            'route' => $this->route,
+            'payload' => $this->getPayload(),
         ];
     }
 
