@@ -21,6 +21,7 @@ class ServiceBusChannel
      * @var Client
      */
     private $client;
+
     protected $hasAttemptedLogin = false;
     protected $useStaging = false;
     protected $ventureConfig = [];
@@ -29,16 +30,26 @@ class ServiceBusChannel
      * ServiceBusChannel constructor.
      *
      * @param array $ventureConfig
+     * @param Client $client
      */
-    public function __construct(array $ventureConfig = [])
-    {
+    public function __construct(
+        array $ventureConfig = [],
+        Client $client = null
+    ) {
         $this->ventureConfig = $ventureConfig ?: config('services.service_bus');
 
-        $this->client = new Client(
-            [
-                'base_uri' => Arr::get($this->ventureConfig, 'endpoint'),
-            ]
-        );
+        if (!$client) {
+            $client = resolve(
+                Client::class,
+                [
+                    'config' => [
+                        'base_uri' => Arr::get($this->ventureConfig, 'endpoint'),
+                    ],
+                ]
+            );
+        }
+
+        $this->client = $client;
     }
 
     /**
@@ -176,7 +187,7 @@ class ServiceBusChannel
      *
      * @return string
      */
-    private function getUrl($endpoint): string
+    protected function getUrl($endpoint): string
     {
         return $endpoint;
     }
