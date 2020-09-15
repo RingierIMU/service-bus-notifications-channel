@@ -239,7 +239,7 @@ class ServiceBusEvent
             'action_type' => $this->actionType,
             'action_reference' => $this->actionReference,
             'version' => $this->ventureConfig['version'],
-            'route' => $this->route ?? "",
+            'route' => $this->route ?? '',
             'payload' => $this->getPayload(),
         ];
     }
