@@ -164,6 +164,23 @@ class ServiceBusEvent
     }
 
     /**
+     * The entity that the event applies to, where relevant, eg, the user that logged in.
+     *
+     * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
+     *
+     * @param string $resourceName
+     * @param object  $resource
+     *
+     * @return $this
+     */
+    public function withResourcesObject(string $resourceName, object $resource)
+    {
+        $this->payload[$resourceName] = $resource;
+
+        return $this;
+    }
+
+    /**
      * @param array $payload
      *
      * @return $this
