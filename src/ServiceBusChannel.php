@@ -85,7 +85,7 @@ class ServiceBusChannel
         ];
 
         try {
-            $this->client->request(
+            $response = $this->client->request(
                 'POST',
                 $this->getUrl('events'),
                 [
@@ -100,6 +100,10 @@ class ServiceBusChannel
                     [
                         'event' => $eventType,
                         'params' => $params,
+                        'response' => [
+                            'statusCode' => $response->getStatusCode(),
+                            'body' => (string) $response->getBody(),
+                        ],
                         'tags' => [
                             'service-bus',
                         ],
