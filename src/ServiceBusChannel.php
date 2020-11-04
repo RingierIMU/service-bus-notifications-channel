@@ -2,6 +2,7 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -22,7 +23,6 @@ class ServiceBusChannel
      */
     private $client;
     protected $hasAttemptedLogin = false;
-    protected $useStaging = false;
     protected $ventureConfig = [];
 
     /**
@@ -107,9 +107,11 @@ class ServiceBusChannel
                 );
             }
         } catch (RequestException $exception) {
-            if ($exception->getCode() == '403') {
-                Log::warning(
-                    '403 received. Logging in and retrying',
+            $code = $exception->getCode();
+
+            if (in_array($code, [401, 403])) {
+                Log::info(
+                    "$code received. Logging in and retrying.",
                     [
                         'event' => $eventType,
                         'params' => $params,
@@ -145,38 +147,39 @@ class ServiceBusChannel
      */
     private function getToken(): string
     {
-        $token = Cache::get($this->generateTokenKey());
+        return Cache::rememberForever(
+            $this->generateTokenKey(),
+            function () {
+                try {
+                    $response = $this->client->request(
+                        'POST',
+                        $this->getUrl('login'),
+                        [
+                            'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
+                        ]
+                    );
 
-        if (empty($token)) {
-            try {
-                $body = $this->client->request(
-                    'POST',
-                    $this->getUrl('login'),
-                    [
-                        'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
-                    ]
-                )->getBody();
+                    switch ($response->getStatusCode()) {
+                        case 200:
+                            $json = json_decode((string) $response->getBody());
 
-                $json = json_decode($body);
-
-                $token = $json->token;
-
-                // there is no timeout on tokens, so cache it forever //
-                Cache::forever($this->generateTokenKey(), $token);
-            } catch (RequestException $exception) {
-                throw CouldNotSendNotification::requestFailed($exception);
+                            return $json->token;
+                        default:
+                            throw CouldNotSendNotification::loginFailed($response);
+                    }
+                } catch (RequestException $exception) {
+                    throw CouldNotSendNotification::requestFailed($exception);
+                }
             }
-        }
-
-        return $token;
+        );
     }
 
     /**
-     * @param $endpoint
+     * @param string $endpoint
      *
      * @return string
      */
-    private function getUrl($endpoint): string
+    private function getUrl(string $endpoint): string
     {
         return $endpoint;
     }
