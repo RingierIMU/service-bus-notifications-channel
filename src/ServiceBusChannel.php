@@ -2,7 +2,6 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;

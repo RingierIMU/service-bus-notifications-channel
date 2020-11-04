@@ -4,6 +4,7 @@ namespace Ringierimu\ServiceBusNotificationsChannel\Exceptions;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
 /**
@@ -53,7 +54,7 @@ class CouldNotSendNotification extends Exception
 
         return new static('Something went wrong logging in');
     }
-}
+
     /**
      * @param Throwable $exception
      *
