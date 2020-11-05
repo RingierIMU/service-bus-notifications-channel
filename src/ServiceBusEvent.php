@@ -158,7 +158,7 @@ class ServiceBusEvent
      */
     public function withResources(string $resourceName, array $resource)
     {
-        $this->payload[$resourceName][] = $resource;
+        $this->payload[$resourceName] = $resource;
 
         return $this;
     }
