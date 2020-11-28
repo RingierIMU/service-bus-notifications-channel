@@ -147,7 +147,7 @@ class ServiceBusChannel
     {
         $token = Cache::get($this->generateTokenKey());
 
-        if (empty($token)) {
+        if (isset($token)) {
             try {
                 $body = $this->client->request(
                     'POST',
