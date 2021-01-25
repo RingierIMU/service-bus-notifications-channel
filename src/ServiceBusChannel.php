@@ -164,8 +164,6 @@ class ServiceBusChannel
 
                     switch ($code) {
                         case 200:
-                            Log::info('ServiceBusChannel getToken response', ['body' => $body]);
-
                             return $body['token'];
                         default:
                             throw CouldNotSendNotification::loginFailed($response);
