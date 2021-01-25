@@ -158,10 +158,12 @@ class ServiceBusChannel
                         ]
                     );
 
-                    switch ($response->getStatusCode()) {
-                        case 200:
-                            $body = json_decode((string) $response->getBody(), true);
+                    $body = json_decode((string) $response->getBody(), true);
 
+                    $code = (int) Arr::get($body, 'code', $response->getStatusCode());
+
+                    switch ($code) {
+                        case 200:
                             Log::info('ServiceBusChannel getToken response', ['body' => $body]);
 
                             return $body['token'];
