@@ -158,11 +158,13 @@ class ServiceBusChannel
                         ]
                     );
 
-                    switch ($response->getStatusCode()) {
-                        case 200:
-                            $json = json_decode((string) $response->getBody());
+                    $body = json_decode((string) $response->getBody(), true);
 
-                            return $json->token;
+                    $code = (int) Arr::get($body, 'code', $response->getStatusCode());
+
+                    switch ($code) {
+                        case 200:
+                            return $body['token'];
                         default:
                             throw CouldNotSendNotification::loginFailed($response);
                     }
