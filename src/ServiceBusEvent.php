@@ -170,14 +170,15 @@ class ServiceBusEvent
     /**
      * @param string $resourceName
      * @param array|JsonResource $resource
+     * @param null|Request $request
      *
      * @return this
      */
-    public function withResource(string $resourceName, $resource): self
+    public function withResource(string $resourceName, $resource, Request $request = null): self
     {
         if (!is_array($resource)) {
             if ($resource instanceof JsonResource) {
-                $resource = $resource->toArray();
+                $resource = $resource->toArray($request);
             } else {
                 throw new Exception('Unhandled resource type: ' . get_class($resource));
             }
