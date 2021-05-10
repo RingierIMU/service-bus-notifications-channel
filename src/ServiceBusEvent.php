@@ -3,6 +3,8 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
@@ -151,6 +153,8 @@ class ServiceBusEvent
      *
      * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
      *
+     * @deprecated Use withResource and withPayload instead.
+
      * @param string $resourceName
      * @param array  $resource
      *
@@ -164,13 +168,40 @@ class ServiceBusEvent
     }
 
     /**
+     * @param string $resourceName
+     * @param array|JsonResource $resource
+     *
+     * @return this
+     */
+    public function withResource(string $resourceName, $resource): self
+    {
+        if (!is_array($resource)) {
+            switch (get_class($resource)) {
+                case JsonResource::class:
+                    $resource = $resource->toArray();
+                    break;
+                default:
+                    throw new Exception('Unhandled resource type: ' . get_class($resource));
+            }
+        }
+
+        $this->payload[$resourceName] = $resource;
+
+        return $this;
+    }
+
+    /**
      * @param array $payload
      *
      * @return $this
      */
     public function withPayload(array $payload)
     {
-        $this->payload = $payload;
+        $this->payload = [];
+
+        foreach ($payload as $resourceName => $resource) {
+            $this->withResource($resourceName, $resource);
+        }
 
         return $this;
     }
