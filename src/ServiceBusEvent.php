@@ -176,12 +176,10 @@ class ServiceBusEvent
     public function withResource(string $resourceName, $resource): self
     {
         if (!is_array($resource)) {
-            switch (get_class($resource)) {
-                case JsonResource::class:
-                    $resource = $resource->toArray();
-                    break;
-                default:
-                    throw new Exception('Unhandled resource type: ' . get_class($resource));
+            if ($resource instanceof JsonResource) {
+                $resource = $resource->toArray();
+            } else {
+                throw new Exception('Unhandled resource type: ' . get_class($resource));
             }
         }
 
