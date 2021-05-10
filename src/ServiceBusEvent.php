@@ -154,7 +154,7 @@ class ServiceBusEvent
      * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
      *
      * @deprecated Use withResource and withPayload instead.
-
+     *
      * @param string $resourceName
      * @param array  $resource
      *
