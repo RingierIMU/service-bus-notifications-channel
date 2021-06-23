@@ -181,7 +181,7 @@ class ServiceBusEvent
             if ($resource instanceof JsonResource) {
                 $resource = $resource->toArray($request);
             } else {
-                throw new Exception('Unhandled resource type: ' . $resourceName . ' '  . json_encode($resource));
+                throw new Exception('Unhandled resource type: ' . $resourceName . ' ' . json_encode($resource));
             }
         }
 
