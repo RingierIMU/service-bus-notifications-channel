@@ -148,32 +148,32 @@ class ServiceBusChannel
     {
         return Cache::tags('service-bus-token')
             ->rememberForever(
-            $this->generateTokenKey(),
-            function () {
-                try {
-                    $response = $this->client->request(
-                        'POST',
-                        $this->getUrl('login'),
-                        [
-                            'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
-                        ]
-                    );
+                $this->generateTokenKey(),
+                function () {
+                    try {
+                        $response = $this->client->request(
+                            'POST',
+                            $this->getUrl('login'),
+                            [
+                                'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
+                            ]
+                        );
 
-                    $body = json_decode((string) $response->getBody(), true);
+                        $body = json_decode((string) $response->getBody(), true);
 
-                    $code = (int) Arr::get($body, 'code', $response->getStatusCode());
+                        $code = (int) Arr::get($body, 'code', $response->getStatusCode());
 
-                    switch ($code) {
-                        case 200:
-                            return $body['token'];
-                        default:
-                            throw CouldNotSendNotification::loginFailed($response);
+                        switch ($code) {
+                            case 200:
+                                return $body['token'];
+                            default:
+                                throw CouldNotSendNotification::loginFailed($response);
+                        }
+                    } catch (RequestException $exception) {
+                        throw CouldNotSendNotification::requestFailed($exception);
                     }
-                } catch (RequestException $exception) {
-                    throw CouldNotSendNotification::requestFailed($exception);
                 }
-            }
-        );
+            );
     }
 
     /**
