@@ -146,7 +146,8 @@ class ServiceBusChannel
      */
     private function getToken(): string
     {
-        return Cache::rememberForever(
+        return Cache::tags('service-bus-token')
+            ->rememberForever(
             $this->generateTokenKey(),
             function () {
                 try {
