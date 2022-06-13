@@ -189,7 +189,7 @@ class ServiceBusChannel
     public function generateTokenKey()
     {
         return md5(
-            'service-bus-token' .
+            'service-bus-token-with-tag' .
             Arr::get($this->ventureConfig, 'venture_config_id')
         );
     }
