@@ -22,20 +22,20 @@ class ServiceBusChannel
      */
     private $client;
     protected $hasAttemptedLogin = false;
-    protected $ventureConfig = [];
+    protected $node = [];
 
     /**
      * ServiceBusChannel constructor.
      *
-     * @param array $ventureConfig
+     * @param array $node
      */
-    public function __construct(array $ventureConfig = [])
+    public function __construct(array $node = [])
     {
-        $this->ventureConfig = $ventureConfig ?: config('services.service_bus');
+        $this->node = $node ?: config('services.service_bus');
 
         $this->client = new Client(
             [
-                'base_uri' => Arr::get($this->ventureConfig, 'endpoint'),
+                'base_uri' => Arr::get($this->node, 'endpoint'),
             ]
         );
     }
@@ -56,9 +56,9 @@ class ServiceBusChannel
         $event = $notification->toServiceBus($notifiable);
         $eventType = $event->getEventType();
         $params = $event->getParams();
-        $dontReport = Arr::get($this->ventureConfig, 'dont_report', []);
+        $dontReport = Arr::get($this->node, 'dont_report', []);
 
-        if (Arr::get($this->ventureConfig, 'enabled') == false) {
+        if (Arr::get($this->node, 'enabled') == false) {
             if (!in_array($eventType, $dontReport)) {
                 Log::debug(
                     "$eventType service bus notification [disabled]",
@@ -154,7 +154,7 @@ class ServiceBusChannel
                         'POST',
                         $this->getUrl('login'),
                         [
-                            'json' => Arr::only($this->ventureConfig, ['username', 'password', 'venture_config_id']),
+                            'json' => Arr::only($this->node, ['username', 'password', 'venture_config_id']),
                         ]
                     );
 
@@ -189,7 +189,7 @@ class ServiceBusChannel
     {
         return md5(
             'service-bus-token' .
-            Arr::get($this->ventureConfig, 'venture_config_id')
+            Arr::get($this->node, 'venture_config_id')
         );
     }
 }
