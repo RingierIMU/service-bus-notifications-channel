@@ -261,14 +261,30 @@ class ServiceBusEvent
      */
     public function getParams(): array
     {
+        $version = intval($this->node['version']);
+
+        if ($version < 2) {
+            return [
+                'events' => [$this->eventType],
+                'venture_reference' => $this->reference,
+                'reference' => $this->reference,
+                'venture_config_id' => $this->node['venture_config_id'],
+                'from' => $this->node['from'],
+                'created_at' => $this->createdAt->toISOString(),
+                'culture' => $this->getCulture(),
+                'action_type' => $this->actionType,
+                'action_reference' => $this->actionReference,
+                'version' => $this->node['version'],
+                'route' => $this->route,
+                'payload' => $this->getPayload(),
+            ];
+        }
+
         return [
             'events' => [$this->eventType],
             'reference' => $this->reference,
-            'from' => $this->node['venture_config_id'],
+            'from' => $this->node['from'],
             'created_at' => $this->createdAt->toISOString(),
-            'culture' => $this->getCulture(),
-            'action_type' => $this->actionType,
-            'action_reference' => $this->actionReference,
             'version' => $this->node['version'],
             'route' => $this->route,
             'payload' => $this->getPayload(),
