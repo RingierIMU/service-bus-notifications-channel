@@ -42,18 +42,18 @@ class ServiceBusEvent
     protected $createdAt;
     protected $payload;
     protected $route;
-    protected $node = [];
+    protected $config = [];
 
     /**
      * ServiceBusEvent constructor.
      *
      * @param string $eventType
-     * @param array  $node
+     * @param array  $config
      */
-    public function __construct(string $eventType, array $node = [])
+    public function __construct(string $eventType, array $config = [])
     {
         $this->eventType = $eventType;
-        $this->node = $node ?: config('services.service_bus');
+        $this->config = $config ?: config('services.service_bus');
         $this->createdAt = Carbon::now();
         $this->reference = $this->generateUUID();
     }
@@ -66,13 +66,13 @@ class ServiceBusEvent
      * - services.service_bus.version
      *
      * @param string $eventType
-     * @param array  $node
+     * @param array  $config
      *
      * @return ServiceBusEvent
      */
-    public static function create(string $eventType, array $node = []): self
+    public static function create(string $eventType, array $config = []): self
     {
-        return new static($eventType, $node);
+        return new static($eventType, $config);
     }
 
     /**
@@ -227,7 +227,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? $this->node['culture'];
+        return $this->culture ?? $this->config['culture'];
     }
 
     /**
@@ -261,20 +261,20 @@ class ServiceBusEvent
      */
     public function getParams(): array
     {
-        $version = intval($this->node['version']);
+        $version = intval($this->config['version']);
 
         if ($version < 2) {
             return [
                 'events' => [$this->eventType],
                 'venture_reference' => $this->reference,
                 'reference' => $this->reference,
-                'venture_config_id' => $this->node['venture_config_id'],
-                'from' => $this->node['from'],
+                'venture_config_id' => $this->config['venture_config_id'],
+                'from' => $this->config['from'],
                 'created_at' => $this->createdAt->toISOString(),
                 'culture' => $this->getCulture(),
                 'action_type' => $this->actionType,
                 'action_reference' => $this->actionReference,
-                'version' => $this->node['version'],
+                'version' => $this->config['version'],
                 'route' => $this->route,
                 'payload' => $this->getPayload(),
             ];
@@ -283,9 +283,9 @@ class ServiceBusEvent
         return [
             'events' => [$this->eventType],
             'reference' => $this->reference,
-            'from' => $this->node['from'],
+            'from' => $this->config['from'],
             'created_at' => $this->createdAt->toISOString(),
-            'version' => $this->node['version'],
+            'version' => $this->config['version'],
             'route' => $this->route,
             'payload' => $this->getPayload(),
         ];

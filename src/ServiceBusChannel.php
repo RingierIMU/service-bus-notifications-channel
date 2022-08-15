@@ -22,20 +22,20 @@ class ServiceBusChannel
      */
     private $client;
     protected $hasAttemptedLogin = false;
-    protected $node = [];
+    protected $config = [];
 
     /**
      * ServiceBusChannel constructor.
      *
-     * @param array $node
+     * @param array $config
      */
-    public function __construct(array $node = [])
+    public function __construct(array $config = [])
     {
-        $this->node = $node ?: config('services.service_bus');
+        $this->config = $config ?: config('services.service_bus');
 
         $this->client = new Client(
             [
-                'base_uri' => Arr::get($this->node, 'endpoint'),
+                'base_uri' => Arr::get($this->config, 'endpoint'),
             ]
         );
     }
@@ -56,9 +56,9 @@ class ServiceBusChannel
         $event = $notification->toServiceBus($notifiable);
         $eventType = $event->getEventType();
         $params = $event->getParams();
-        $dontReport = Arr::get($this->node, 'dont_report', []);
+        $dontReport = Arr::get($this->config, 'dont_report', []);
 
-        if (Arr::get($this->node, 'enabled') == false) {
+        if (Arr::get($this->config, 'enabled') == false) {
             if (!in_array($eventType, $dontReport)) {
                 Log::debug(
                     "$eventType service bus notification [disabled]",
@@ -150,13 +150,25 @@ class ServiceBusChannel
             $this->generateTokenKey(),
             function () {
                 try {
-                    $response = $this->client->request(
-                        'POST',
-                        $this->getUrl('login'),
-                        [
-                            'json' => Arr::only($this->node, ['username', 'password', 'venture_config_id']),
-                        ]
-                    );
+                    $version = intval($this->config['version']);
+
+                    if ($version < 2) {
+                        $response = $this->client->request(
+                            'POST',
+                            $this->getUrl('login'),
+                            [
+                                'json' => Arr::only($this->config, ['username', 'password', 'venture_config_id']),
+                            ]
+                        );
+                    } else {
+                        $response = $this->client->request(
+                            'POST',
+                            $this->getUrl('login'),
+                            [
+                                'json' => Arr::only($this->config, ['username', 'password', 'node_id']),
+                            ]
+                        );
+                    }
 
                     $body = json_decode((string) $response->getBody(), true);
 
@@ -187,9 +199,18 @@ class ServiceBusChannel
 
     public function generateTokenKey()
     {
+        $version = intval($this->config['version']);
+
+        if ($version < 2) {
+            return md5(
+                'service-bus-token' .
+                Arr::get($this->config, 'venture_config_id')
+            );
+        }
+
         return md5(
             'service-bus-token' .
-            Arr::get($this->node, 'venture_config_id')
+            Arr::get($this->config, 'node_id')
         );
     }
 }
