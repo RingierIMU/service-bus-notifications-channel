@@ -269,7 +269,7 @@ class ServiceBusEvent
                 'venture_reference' => $this->reference,
                 'reference' => $this->reference,
                 'venture_config_id' => $this->config['venture_config_id'],
-                'from' => $this->config['from'],
+                'from' => $this->config['venture_config_id'],
                 'created_at' => $this->createdAt->toISOString(),
                 'culture' => $this->getCulture(),
                 'action_type' => $this->actionType,
