@@ -14,7 +14,7 @@ use Throwable;
  * Class ServiceBusEvent.
  *
  * @property string eventType
- * @property string ventureReference
+ * @property string reference
  * @property string culture
  * @property string actionType
  * @property string actionReference
@@ -35,44 +35,44 @@ class ServiceBusEvent
     ];
 
     protected $eventType;
-    protected $ventureReference;
+    protected $reference;
     protected $culture;
     protected $actionType;
     protected $actionReference;
     protected $createdAt;
     protected $payload;
     protected $route;
-    protected $ventureConfig = [];
+    protected $config = [];
 
     /**
      * ServiceBusEvent constructor.
      *
      * @param string $eventType
-     * @param array  $ventureConfig
+     * @param array  $config
      */
-    public function __construct(string $eventType, array $ventureConfig = [])
+    public function __construct(string $eventType, array $config = [])
     {
         $this->eventType = $eventType;
-        $this->ventureConfig = $ventureConfig ?: config('services.service_bus');
+        $this->config = $config ?: config('services.service_bus');
         $this->createdAt = Carbon::now();
-        $this->ventureReference = $this->generateUUID();
+        $this->reference = $this->generateUUID();
     }
 
     /**
      * Create an event to be sent to the service bus.
      *
      * Required config:
-     * - services.service_bus.venture_config_id
+     * - services.service_bus.from
      * - services.service_bus.version
      *
      * @param string $eventType
-     * @param array  $ventureConfig
+     * @param array  $config
      *
      * @return ServiceBusEvent
      */
-    public static function create(string $eventType, array $ventureConfig = []): self
+    public static function create(string $eventType, array $config = []): self
     {
-        return new static($eventType, $ventureConfig);
+        return new static($eventType, $config);
     }
 
     /**
@@ -80,13 +80,13 @@ class ServiceBusEvent
      *
      * If this is not sent a UUID will be generated and sent with the request.
      *
-     * @param string $ventureReference
+     * @param string $reference
      *
      * @return ServiceBusEvent
      */
-    public function withReference(string $ventureReference): self
+    public function withReference(string $reference): self
     {
-        $this->ventureReference = $ventureReference;
+        $this->reference = $reference;
 
         return $this;
     }
@@ -227,7 +227,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? $this->ventureConfig['culture'];
+        return $this->culture ?? $this->config['culture'];
     }
 
     /**
@@ -261,15 +261,31 @@ class ServiceBusEvent
      */
     public function getParams(): array
     {
+        $version = intval($this->config['version']);
+
+        if ($version < 2) {
+            return [
+                'events' => [$this->eventType],
+                'venture_reference' => $this->reference,
+                'reference' => $this->reference,
+                'venture_config_id' => $this->config['venture_config_id'],
+                'from' => $this->config['venture_config_id'],
+                'created_at' => $this->createdAt->toISOString(),
+                'culture' => $this->getCulture(),
+                'action_type' => $this->actionType,
+                'action_reference' => $this->actionReference,
+                'version' => $this->config['version'],
+                'route' => $this->route,
+                'payload' => $this->getPayload(),
+            ];
+        }
+
         return [
             'events' => [$this->eventType],
-            'venture_reference' => $this->ventureReference,
-            'venture_config_id' => $this->ventureConfig['venture_config_id'],
+            'reference' => $this->reference,
+            'from' => $this->config['from'],
             'created_at' => $this->createdAt->toISOString(),
-            'culture' => $this->getCulture(),
-            'action_type' => $this->actionType,
-            'action_reference' => $this->actionReference,
-            'version' => $this->ventureConfig['version'],
+            'version' => $this->config['version'],
             'route' => $this->route,
             'payload' => $this->getPayload(),
         ];

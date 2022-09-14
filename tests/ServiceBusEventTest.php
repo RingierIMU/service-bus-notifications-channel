@@ -105,4 +105,55 @@ class ServiceBusEventTest extends TestCase
 
         $this->assertEquals($payload, $serviceBusData['payload']);
     }
+
+    /**
+     * @throws InvalidConfigException
+     * @throws Throwable
+     */
+    public function testShouldReturnCorrectEventForSpecificVersion()
+    {
+        $version2Structure = [
+            'from' => '576192a7-8719-4dc0-a058-76f66973af0a',
+            'version' => '2.0.0',
+        ];
+
+        $serviceBusVersion1 = ServiceBusEvent::create('test')
+            ->withAction('other', uniqid())
+            ->withCulture('en')
+            ->withReference(uniqid())
+            ->withRoute('api')
+            ->createdAt(Carbon::now());
+
+        $serviceBusVersion2 = ServiceBusEvent::create('test', $version2Structure)
+            ->withReference(uniqid())
+            ->withRoute('api')
+            ->createdAt(Carbon::now());
+
+        $serviceBusDataVersion1 = $serviceBusVersion1->getParams();
+        $serviceBusDataVersion2 = $serviceBusVersion2->getParams();
+
+        $this->assertNotEmpty($serviceBusDataVersion1);
+        $this->assertNotEmpty($serviceBusDataVersion2);
+
+        $this->assertArrayHasKey('events', $serviceBusDataVersion1);
+        $this->assertArrayHasKey('payload', $serviceBusDataVersion1);
+        $this->assertArrayHasKey('from', $serviceBusDataVersion1);
+        $this->assertArrayHasKey('venture_config_id', $serviceBusDataVersion1);
+        $this->assertArrayHasKey('venture_reference', $serviceBusDataVersion1);
+        $this->assertArrayHasKey('reference', $serviceBusDataVersion1);
+
+        $this->assertArrayHasKey('from', $serviceBusDataVersion2);
+        $this->assertArrayHasKey('events', $serviceBusDataVersion2);
+        $this->assertArrayHasKey('payload', $serviceBusDataVersion2);
+        $this->assertArrayHasKey('reference', $serviceBusDataVersion2);
+
+        $this->assertNotEmpty($serviceBusDataVersion1['venture_config_id']);
+        $this->assertNotEmpty($serviceBusDataVersion1['venture_reference']);
+
+        $this->assertNotEmpty($serviceBusDataVersion2['from']);
+        $this->assertNotEmpty($serviceBusDataVersion2['reference']);
+
+        $this->assertContains('test', $serviceBusDataVersion1['events']);
+        $this->assertContains('test', $serviceBusDataVersion2['events']);
+    }
 }
