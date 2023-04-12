@@ -92,7 +92,6 @@ class ServiceBusChannel
                     'json' => [$params],
                 ]
             );
-
             if (!in_array($eventType, $dontReport)) {
                 Log::debug(
                     "$eventType service bus notification",
