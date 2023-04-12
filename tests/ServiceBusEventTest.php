@@ -118,7 +118,7 @@ class ServiceBusEventTest extends TestCase
             ->withReference(uniqid())
             ->withRoute('api')
             ->withPayload([
-                'listing' => []
+                'listing' => [],
             ])
             ->createdAt(Carbon::now());
 
@@ -126,7 +126,7 @@ class ServiceBusEventTest extends TestCase
             ->withReference(uniqid())
             ->withRoute('api')
             ->withPayload([
-                'listing' => []
+                'listing' => [],
             ])
             ->createdAt(Carbon::now());
 
