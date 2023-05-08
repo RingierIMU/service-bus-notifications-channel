@@ -15,14 +15,14 @@ class ServiceBusEventTest extends TestCase
 {
     public function testShouldCreateServiceBusEventInstance()
     {
-        $serviceBus = new ServiceBusEvent('test');
+        $serviceBus = new ServiceBusEvent('test', config_v2());
 
         $this->assertEquals('test', $serviceBus->getEventType());
     }
 
     public function testShouldCreateServiceBusEventInstanceViaStaticCall()
     {
-        $serviceBus = ServiceBusEvent::create('test');
+        $serviceBus = ServiceBusEvent::create('test', config_v2());
 
         $this->assertEquals('test', $serviceBus->getEventType());
     }
@@ -55,7 +55,7 @@ class ServiceBusEventTest extends TestCase
             'phone' => '0123456789',
         ];
 
-        $serviceBus = ServiceBusEvent::create('test')
+        $serviceBus = ServiceBusEvent::create('test', config_v2())
             ->withAction('other', uniqid())
             ->withCulture('en')
             ->withReference(uniqid())
@@ -71,7 +71,7 @@ class ServiceBusEventTest extends TestCase
         $this->assertArrayHasKey('resource', $serviceBusData['payload']);
         $this->assertContains('test', $serviceBusData['events']);
 
-        $this->assertEquals([$resource], $serviceBusData['payload']['resource']);
+        $this->assertEquals($resource, $serviceBusData['payload']['resource']);
     }
 
     /**
@@ -88,7 +88,7 @@ class ServiceBusEventTest extends TestCase
             ],
         ];
 
-        $serviceBus = ServiceBusEvent::create('test')
+        $serviceBus = ServiceBusEvent::create('test', config_v2())
             ->withAction('other', uniqid())
             ->withCulture('en')
             ->withReference(uniqid())
@@ -112,21 +112,22 @@ class ServiceBusEventTest extends TestCase
      */
     public function testShouldReturnCorrectEventForSpecificVersion()
     {
-        $version2Structure = [
-            'from' => '576192a7-8719-4dc0-a058-76f66973af0a',
-            'version' => '2.0.0',
-        ];
-
-        $serviceBusVersion1 = ServiceBusEvent::create('test')
+        $serviceBusVersion1 = ServiceBusEvent::create('test', config_v1())
             ->withAction('other', uniqid())
             ->withCulture('en')
             ->withReference(uniqid())
             ->withRoute('api')
+            ->withPayload([
+                'listing' => [],
+            ])
             ->createdAt(Carbon::now());
 
-        $serviceBusVersion2 = ServiceBusEvent::create('test', $version2Structure)
+        $serviceBusVersion2 = ServiceBusEvent::create('test', config_v2())
             ->withReference(uniqid())
             ->withRoute('api')
+            ->withPayload([
+                'listing' => [],
+            ])
             ->createdAt(Carbon::now());
 
         $serviceBusDataVersion1 = $serviceBusVersion1->getParams();

@@ -23,7 +23,7 @@ class ServiceBusChannelTest extends TestCase
     public function testShouldCreateServiceBusChannelInstance()
     {
         $this->mockAll();
-        $serviceChannel = new ServiceBusChannel();
+        $serviceChannel = new ServiceBusChannel(config_v2());
 
         $this->assertNotNull($serviceChannel);
     }
@@ -38,6 +38,11 @@ class ServiceBusChannelTest extends TestCase
         $this->expectException(CouldNotSendNotification::class);
 
         $this->mockAll();
+        Cache::shouldReceive('rememberForever')
+            ->andReturn(true);
+        Cache::shouldReceive('forget')
+            ->andReturn(true);
+
         $serviceChannel = new ServiceBusChannel();
 
         $serviceChannel->send(new AnonymousNotifiable(), new TestNotification());
@@ -50,7 +55,7 @@ class ServiceBusChannelTest extends TestCase
     {
         Cache::shouldReceive('get')
             ->once()
-            ->with((new ServiceBusChannel())->generateTokenKey())
+            ->with((new ServiceBusChannel(config_v2()))->generateTokenKey())
             ->andReturn('value');
 
         Log::shouldReceive('debug')

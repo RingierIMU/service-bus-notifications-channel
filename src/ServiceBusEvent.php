@@ -283,7 +283,7 @@ class ServiceBusEvent
         return [
             'events' => [$this->eventType],
             'reference' => $this->reference,
-            'from' => $this->config['from'],
+            'from' => $this->config['node_id'],
             'created_at' => $this->createdAt->toISOString(),
             'version' => $this->config['version'],
             'route' => $this->route,
