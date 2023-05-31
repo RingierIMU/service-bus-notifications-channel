@@ -12,15 +12,15 @@
         }
     ],
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.2 || ^8.0 || ^8.1",
         "ext-json": "*",
         "ext-pcre": "*",
         "ext-simplexml": "*",
         "guzzlehttp/guzzle": "^5.3 || ^6 || ^7",
         "guzzlehttp/promises": "~1.0",
         "guzzlehttp/psr7": "^1.4.1",
-        "illuminate/notifications": "^6.0 || ^7.0 || ^8.0 || ^9.0",
-        "illuminate/support": "^6.0 || ^7.0 || ^8.0 || ^9.0",
+        "illuminate/notifications": "^6.0 || ^7.0 || ^8.0 || ^9.0 || ^10.0",
+        "illuminate/support": "^6.0 || ^7.0 || ^8.0 || ^9.0 || ^10.0",
         "ramsey/uuid": "^3.7 || ^4.1"
     },
     "require-dev": {
