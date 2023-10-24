@@ -93,24 +93,21 @@ class ServiceBusChannel
                 ]
             );
 
-            if (!in_array($eventType, $dontReport)) {
-                $body = (string) $response->getBody();
+            Log::debug(
+                "$eventType service bus notification",
+                [
+                    'event' => $eventType,
+                    'params' => $params,
+                    'tags' => [
+                        'service-bus',
+                    ],
+                    'response' => [
+                        'status' => $response->getStatusCode(),
+                        'body' => = (string) $response->getBody(),
 
-                Log::debug(
-                    "$eventType service bus notification",
-                    [
-                        'event' => $eventType,
-                        'params' => $params,
-                        'tags' => [
-                            'service-bus',
-                        ],
-                        'response' => [
-                            'status' => $response->getStatusCode(),
-                            'body' => $body,
-                        ],
-                    ]
-                );
-            }
+                    ],
+                ]
+            );
         } catch (RequestException $exception) {
             $code = $exception->getCode();
 
