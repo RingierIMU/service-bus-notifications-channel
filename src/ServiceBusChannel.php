@@ -84,7 +84,7 @@ class ServiceBusChannel
         ];
 
         try {
-            $this->client->request(
+            $response = $this->client->request(
                 'POST',
                 $this->getUrl('events'),
                 [
@@ -92,7 +92,10 @@ class ServiceBusChannel
                     'json' => [$params],
                 ]
             );
+
             if (!in_array($eventType, $dontReport)) {
+                $body = (string) $response->getBody();
+
                 Log::debug(
                     "$eventType service bus notification",
                     [
@@ -100,6 +103,10 @@ class ServiceBusChannel
                         'params' => $params,
                         'tags' => [
                             'service-bus',
+                        ],
+                        'response' => [
+                            'status' => $response->getStatusCode(),
+                            'body' => $body,
                         ],
                     ]
                 );
