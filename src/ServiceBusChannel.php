@@ -103,8 +103,7 @@ class ServiceBusChannel
                     ],
                     'response' => [
                         'status' => $response->getStatusCode(),
-                        'body' => = (string) $response->getBody(),
-
+                        'body' => (string) $response->getBody(),
                     ],
                 ]
             );
