@@ -93,7 +93,7 @@ class ServiceBusChannel
                 ]
             );
 
-            Log::debug(
+            Log::info(
                 "$eventType service bus notification",
                 [
                     'event' => $eventType,
