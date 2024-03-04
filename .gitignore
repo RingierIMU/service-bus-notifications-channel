@@ -1,6 +1,5 @@
+/.envrc
+/.idea/
+/.phpunit.result.cache
+/composer.lock
 /vendor
-build
-composer.lock
-composer.phar
-.idea/
-.phpunit.result.cache
