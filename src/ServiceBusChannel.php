@@ -101,10 +101,7 @@ class ServiceBusChannel
                     'tags' => [
                         'service-bus',
                     ],
-                    'response' => [
-                        'status' => $response->getStatusCode(),
-                        'body' => (string) $response->getBody(),
-                    ],
+                    'status' => $response->getStatusCode(),
                 ]
             );
         } catch (RequestException $exception) {
