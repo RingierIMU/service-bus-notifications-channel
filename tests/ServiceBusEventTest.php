@@ -2,8 +2,7 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
-use Carbon\Carbon;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Carbon;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 use Throwable;
@@ -15,16 +14,16 @@ class ServiceBusEventTest extends TestCase
 {
     public function testShouldCreateServiceBusEventInstance()
     {
-        $serviceBus = new ServiceBusEvent('test', config_v2());
+        $serviceBus = new ServiceBusEvent("test", config_v2());
 
-        $this->assertEquals('test', $serviceBus->getEventType());
+        $this->assertEquals("test", $serviceBus->getEventType());
     }
 
     public function testShouldCreateServiceBusEventInstanceViaStaticCall()
     {
-        $serviceBus = ServiceBusEvent::create('test', config_v2());
+        $serviceBus = ServiceBusEvent::create("test", config_v2());
 
-        $this->assertEquals('test', $serviceBus->getEventType());
+        $this->assertEquals("test", $serviceBus->getEventType());
     }
 
     /**
@@ -34,13 +33,13 @@ class ServiceBusEventTest extends TestCase
     {
         $this->expectException(InvalidConfigException::class);
 
-        ServiceBusEvent::create('test')
-            ->withAction('test', uniqid())
-            ->withCulture('en')
+        ServiceBusEvent::create("test")
+            ->withAction("test", uniqid())
+            ->withCulture("en")
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->createdAt(Carbon::now())
-            ->withResources('resources', ['data']);
+            ->withResources("resources", ["data"]);
     }
 
     /**
@@ -50,28 +49,28 @@ class ServiceBusEventTest extends TestCase
     public function testShouldAllocateAttributesToServiceBusObject()
     {
         $resource = [
-            'user' => 'John Doe',
-            'email' => 'john@doe.com',
-            'phone' => '0123456789',
+            "user" => "John Doe",
+            "email" => "john@doe.com",
+            "phone" => "0123456789",
         ];
 
-        $serviceBus = ServiceBusEvent::create('test', config_v2())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
+        $serviceBus = ServiceBusEvent::create("test", config_v2())
+            ->withAction("other", uniqid())
+            ->withCulture("en")
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->createdAt(Carbon::now())
-            ->withResources('resource', $resource);
+            ->withResources("resource", $resource);
 
         $serviceBusData = $serviceBus->getParams();
 
         $this->assertNotEmpty($serviceBusData);
-        $this->assertArrayHasKey('events', $serviceBusData);
-        $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertArrayHasKey('resource', $serviceBusData['payload']);
-        $this->assertContains('test', $serviceBusData['events']);
+        $this->assertArrayHasKey("events", $serviceBusData);
+        $this->assertArrayHasKey("payload", $serviceBusData);
+        $this->assertArrayHasKey("resource", $serviceBusData["payload"]);
+        $this->assertContains("test", $serviceBusData["events"]);
 
-        $this->assertEquals($resource, $serviceBusData['payload']['resource']);
+        $this->assertEquals($resource, $serviceBusData["payload"]["resource"]);
     }
 
     /**
@@ -81,29 +80,29 @@ class ServiceBusEventTest extends TestCase
     public function testShouldAllocateAttributesToServiceBusObjectWithPayload()
     {
         $payload = [
-            'object' => [
-                'user' => 'John Doe',
-                'email' => 'john@doe.com',
-                'phone' => '0123456789',
+            "object" => [
+                "user" => "John Doe",
+                "email" => "john@doe.com",
+                "phone" => "0123456789",
             ],
         ];
 
-        $serviceBus = ServiceBusEvent::create('test', config_v2())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
+        $serviceBus = ServiceBusEvent::create("test", config_v2())
+            ->withAction("other", uniqid())
+            ->withCulture("en")
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->createdAt(Carbon::now())
             ->withPayload($payload);
 
         $serviceBusData = $serviceBus->getParams();
 
         $this->assertNotEmpty($serviceBusData);
-        $this->assertArrayHasKey('events', $serviceBusData);
-        $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertContains('test', $serviceBusData['events']);
+        $this->assertArrayHasKey("events", $serviceBusData);
+        $this->assertArrayHasKey("payload", $serviceBusData);
+        $this->assertContains("test", $serviceBusData["events"]);
 
-        $this->assertEquals($payload, $serviceBusData['payload']);
+        $this->assertEquals($payload, $serviceBusData["payload"]);
     }
 
     /**
@@ -112,21 +111,21 @@ class ServiceBusEventTest extends TestCase
      */
     public function testShouldReturnCorrectEventForSpecificVersion()
     {
-        $serviceBusVersion1 = ServiceBusEvent::create('test', config_v1())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
+        $serviceBusVersion1 = ServiceBusEvent::create("test", config_v1())
+            ->withAction("other", uniqid())
+            ->withCulture("en")
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->withPayload([
-                'listing' => [],
+                "listing" => [],
             ])
             ->createdAt(Carbon::now());
 
-        $serviceBusVersion2 = ServiceBusEvent::create('test', config_v2())
+        $serviceBusVersion2 = ServiceBusEvent::create("test", config_v2())
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->withPayload([
-                'listing' => [],
+                "listing" => [],
             ])
             ->createdAt(Carbon::now());
 
@@ -136,25 +135,25 @@ class ServiceBusEventTest extends TestCase
         $this->assertNotEmpty($serviceBusDataVersion1);
         $this->assertNotEmpty($serviceBusDataVersion2);
 
-        $this->assertArrayHasKey('events', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('payload', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('from', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('venture_config_id', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('venture_reference', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('reference', $serviceBusDataVersion1);
+        $this->assertArrayHasKey("events", $serviceBusDataVersion1);
+        $this->assertArrayHasKey("payload", $serviceBusDataVersion1);
+        $this->assertArrayHasKey("from", $serviceBusDataVersion1);
+        $this->assertArrayHasKey("venture_config_id", $serviceBusDataVersion1);
+        $this->assertArrayHasKey("venture_reference", $serviceBusDataVersion1);
+        $this->assertArrayHasKey("reference", $serviceBusDataVersion1);
 
-        $this->assertArrayHasKey('from', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('events', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('payload', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('reference', $serviceBusDataVersion2);
+        $this->assertArrayHasKey("from", $serviceBusDataVersion2);
+        $this->assertArrayHasKey("events", $serviceBusDataVersion2);
+        $this->assertArrayHasKey("payload", $serviceBusDataVersion2);
+        $this->assertArrayHasKey("reference", $serviceBusDataVersion2);
 
-        $this->assertNotEmpty($serviceBusDataVersion1['venture_config_id']);
-        $this->assertNotEmpty($serviceBusDataVersion1['venture_reference']);
+        $this->assertNotEmpty($serviceBusDataVersion1["venture_config_id"]);
+        $this->assertNotEmpty($serviceBusDataVersion1["venture_reference"]);
 
-        $this->assertNotEmpty($serviceBusDataVersion2['from']);
-        $this->assertNotEmpty($serviceBusDataVersion2['reference']);
+        $this->assertNotEmpty($serviceBusDataVersion2["from"]);
+        $this->assertNotEmpty($serviceBusDataVersion2["reference"]);
 
-        $this->assertContains('test', $serviceBusDataVersion1['events']);
-        $this->assertContains('test', $serviceBusDataVersion2['events']);
+        $this->assertContains("test", $serviceBusDataVersion1["events"]);
+        $this->assertContains("test", $serviceBusDataVersion2["events"]);
     }
 }

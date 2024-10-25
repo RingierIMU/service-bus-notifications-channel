@@ -2,8 +2,8 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
-use Carbon\Carbon;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Carbon;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 
@@ -19,12 +19,12 @@ class TestNotification extends Notification
      */
     public function toServiceBus()
     {
-        return ServiceBusEvent::create('test')
-            ->withAction('other', uniqid())
-            ->withCulture('en')
+        return ServiceBusEvent::create("test")
+            ->withAction("other", uniqid())
+            ->withCulture("en")
             ->withReference(uniqid())
-            ->withRoute('api')
+            ->withRoute("api")
             ->createdAt(Carbon::now())
-            ->withResources('resources', ['data']);
+            ->withResources("resources", ["data"]);
     }
 }

@@ -2,11 +2,11 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Ramsey\Uuid\Uuid;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
 
@@ -25,13 +25,13 @@ use Throwable;
 class ServiceBusEvent
 {
     public static $actionTypes = [
-        'user',
-        'admin',
-        'api',
-        'system',
-        'app',
-        'migration',
-        'other',
+        "user",
+        "admin",
+        "api",
+        "system",
+        "app",
+        "migration",
+        "other",
     ];
 
     protected $eventType;
@@ -53,9 +53,9 @@ class ServiceBusEvent
     public function __construct(string $eventType, array $config = [])
     {
         $this->eventType = $eventType;
-        $this->config = $config ?: config('services.service_bus');
+        $this->config = $config ?: config("services.service_bus");
         $this->createdAt = Carbon::now();
-        $this->reference = $this->generateUUID();
+        $this->reference = (string) Str::uuid();
     }
 
     /**
@@ -127,7 +127,10 @@ class ServiceBusEvent
             $this->actionType = $type;
             $this->actionReference = $reference;
         } else {
-            throw new InvalidConfigException('Action type must be on of the following: ' . print_r(self::$actionTypes, true));
+            throw new InvalidConfigException(
+                "Action type must be on of the following: " .
+                    print_r(self::$actionTypes, true)
+            );
         }
 
         return $this;
@@ -175,13 +178,21 @@ class ServiceBusEvent
      *
      * @return this
      */
-    public function withResource(string $resourceName, $resource, Request $request = null): self
-    {
+    public function withResource(
+        string $resourceName,
+        $resource,
+        Request $request = null
+    ): self {
         if (!is_array($resource)) {
             if ($resource instanceof JsonResource) {
                 $resource = $resource->toArray($request);
             } else {
-                throw new Exception('Unhandled resource type: ' . $resourceName . ' ' . json_encode($resource));
+                throw new Exception(
+                    "Unhandled resource type: " .
+                        $resourceName .
+                        " " .
+                        json_encode($resource)
+                );
             }
         }
 
@@ -227,7 +238,7 @@ class ServiceBusEvent
      */
     protected function getCulture(): string
     {
-        return $this->culture ?? $this->config['culture'];
+        return $this->culture ?? $this->config["culture"];
     }
 
     /**
@@ -241,18 +252,6 @@ class ServiceBusEvent
     }
 
     /**
-     * Generates a v4 UUID.
-     *
-     * @throws Throwable
-     *
-     * @return string
-     */
-    private function generateUUID(): string
-    {
-        return Uuid::uuid4()->toString();
-    }
-
-    /**
      * Return the event as an array that can be sent to the service.
      *
      * @throws Throwable
@@ -261,33 +260,33 @@ class ServiceBusEvent
      */
     public function getParams(): array
     {
-        $version = intval($this->config['version']);
+        $version = intval($this->config["version"]);
 
         if ($version < 2) {
             return [
-                'events' => [$this->eventType],
-                'venture_reference' => $this->reference,
-                'reference' => $this->reference,
-                'venture_config_id' => $this->config['venture_config_id'],
-                'from' => $this->config['venture_config_id'],
-                'created_at' => $this->createdAt->toISOString(),
-                'culture' => $this->getCulture(),
-                'action_type' => $this->actionType,
-                'action_reference' => $this->actionReference,
-                'version' => $this->config['version'],
-                'route' => $this->route,
-                'payload' => $this->getPayload(),
+                "events" => [$this->eventType],
+                "venture_reference" => $this->reference,
+                "reference" => $this->reference,
+                "venture_config_id" => $this->config["venture_config_id"],
+                "from" => $this->config["venture_config_id"],
+                "created_at" => $this->createdAt->toISOString(),
+                "culture" => $this->getCulture(),
+                "action_type" => $this->actionType,
+                "action_reference" => $this->actionReference,
+                "version" => $this->config["version"],
+                "route" => $this->route,
+                "payload" => $this->getPayload(),
             ];
         }
 
         return [
-            'events' => [$this->eventType],
-            'reference' => $this->reference,
-            'from' => $this->config['from'] ?? $this->config['node_id'],
-            'created_at' => $this->createdAt->toISOString(),
-            'version' => $this->config['version'],
-            'route' => $this->route,
-            'payload' => $this->getPayload(),
+            "events" => [$this->eventType],
+            "reference" => $this->reference,
+            "from" => $this->config["from"] ?? $this->config["node_id"],
+            "created_at" => $this->createdAt->toISOString(),
+            "version" => $this->config["version"],
+            "route" => $this->route,
+            "payload" => $this->getPayload(),
         ];
     }
 
