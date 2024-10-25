@@ -1,61 +1,57 @@
 {
-    "name": "ringierimu/service-bus-notifications-channel",
-    "description": "Service Bus Notifications Channel",
-    "homepage": "https://github.com/RingierIMU/service-bus-notifications-channel",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "RIMU Core",
-            "email": "tools@roam.africa",
-            "homepage": "http://ringier.tech",
-            "role": "Developer"
-        }
-    ],
-    "require": {
-        "php": "^8",
-        "ext-json": "*",
-        "ext-pcre": "*",
-        "ext-simplexml": "*",
-        "guzzlehttp/guzzle": "^7.2",
-        "guzzlehttp/promises": "^2",
-        "guzzlehttp/psr7": "^1 || ^2",
-        "illuminate/notifications": "^9 || ^10",
-        "illuminate/support": "^9 || ^10",
-        "ramsey/uuid": "^4"
-    },
-    "require-dev": {
-        "ext-dom": "*",
-        "ext-openssl": "*",
-        "ext-pcntl": "*",
-        "ext-sockets": "*",
-        "mockery/mockery": "^1",
-        "phpunit/phpunit": "^9.5",
-        "tightenco/tlint": "^8 || ^9"
-    },
-    "extra": {
-        "include_files": [
-            "tests/Fixtures/Helpers.php"
-        ],
-        "laravel": {
-            "providers": [
-                "Ringierimu\\ServiceBusNotificationsChannel\\ServiceBusServiceProvider"
-            ]
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "Ringierimu\\ServiceBusNotificationsChannel\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Ringierimu\\ServiceBusNotificationsChannel\\Tests\\": "tests/"
-        },
-        "files": [
-            "tests/helpers.php"
-        ]
-    },
-    "scripts": {
-        "test": "vendor/bin/phpunit"
+  "name": "ringierimu/service-bus-notifications-channel",
+  "description": "Service Bus Notifications Channel",
+  "homepage": "https://github.com/RingierIMU/service-bus-notifications-channel",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "RIMU Core",
+      "email": "tools@roam.africa",
+      "homepage": "http://ringier.tech",
+      "role": "Developer"
     }
+  ],
+  "require": {
+    "php": "^8",
+    "ext-json": "*",
+    "ext-pcre": "*",
+    "ext-simplexml": "*",
+    "illuminate/notifications": "^9 || ^10 || ^11",
+    "illuminate/support": "^9 || ^10 || ^11"
+  },
+  "require-dev": {
+    "ext-dom": "*",
+    "ext-openssl": "*",
+    "ext-pcntl": "*",
+    "ext-sockets": "*",
+    "mockery/mockery": "^1.4.4 || ^1.6",
+    "phpunit/phpunit": "^9.5.10 || ^10.1 || ^11.0.1",
+    "tightenco/tlint": "^9.3"
+  },
+  "extra": {
+    "include_files": [
+      "tests/Fixtures/Helpers.php"
+    ],
+    "laravel": {
+      "providers": [
+        "Ringierimu\\ServiceBusNotificationsChannel\\ServiceBusServiceProvider"
+      ]
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "Ringierimu\\ServiceBusNotificationsChannel\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Ringierimu\\ServiceBusNotificationsChannel\\Tests\\": "tests/"
+    },
+    "files": [
+      "tests/helpers.php"
+    ]
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit"
+  }
 }

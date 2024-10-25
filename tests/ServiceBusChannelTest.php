@@ -2,10 +2,9 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Mockery\MockInterface;
@@ -29,7 +28,6 @@ class ServiceBusChannelTest extends TestCase
     }
 
     /**
-     * @throws GuzzleException
      * @throws CouldNotSendNotification
      * @throws Throwable
      */
@@ -38,14 +36,15 @@ class ServiceBusChannelTest extends TestCase
         $this->expectException(CouldNotSendNotification::class);
 
         $this->mockAll();
-        Cache::shouldReceive('rememberForever')
-            ->andReturn(true);
-        Cache::shouldReceive('forget')
-            ->andReturn(true);
+        Cache::shouldReceive("rememberForever")->andReturn(true);
+        Cache::shouldReceive("forget")->andReturn(true);
 
         $serviceChannel = new ServiceBusChannel();
 
-        $serviceChannel->send(new AnonymousNotifiable(), new TestNotification());
+        $serviceChannel->send(
+            new AnonymousNotifiable(),
+            new TestNotification()
+        );
     }
 
     /**
@@ -53,27 +52,17 @@ class ServiceBusChannelTest extends TestCase
      */
     private function mockAll()
     {
-        Cache::shouldReceive('get')
+        Cache::shouldReceive("get")
             ->once()
             ->with((new ServiceBusChannel(config_v2()))->generateTokenKey())
-            ->andReturn('value');
+            ->andReturn("value");
 
-        Log::shouldReceive('debug')
-            ->once()
-            ->andReturnNull();
+        Log::shouldReceive("debug")->once()->andReturnNull();
 
-        Log::shouldReceive('info')
-            ->once()
-            ->andReturnNull();
+        Log::shouldReceive("info")->once()->andReturnNull();
 
-        Log::shouldReceive('error')
-            ->once()
-            ->andReturnNull();
+        Log::shouldReceive("error")->once()->andReturnNull();
 
-        Mockery::mock(Client::class, function (MockInterface $mock) {
-            $mock->shouldReceive('execute')
-                ->andReturn(new stdClass())
-                ->once();
-        });
+        Http::fake();
     }
 }
