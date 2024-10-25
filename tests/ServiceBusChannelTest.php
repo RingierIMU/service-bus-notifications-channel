@@ -2,16 +2,10 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
-use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Notifications\AnonymousNotifiable;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Mockery;
-use Mockery\MockInterface;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusChannel;
-use stdClass;
 use Throwable;
 
 /**
