@@ -3,14 +3,9 @@
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
 use Carbon\Carbon;
-use PHPUnit\Framework\TestCase;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
-use Throwable;
 
-/**
- * Class ServiceBusEventTest.
- */
 class ServiceBusEventTest extends TestCase
 {
     public function testShouldCreateServiceBusEventInstance()
@@ -27,9 +22,6 @@ class ServiceBusEventTest extends TestCase
         $this->assertEquals('test', $serviceBus->getEventType());
     }
 
-    /**
-     * @throws InvalidConfigException
-     */
     public function testShouldThrowInvalidConfigException()
     {
         $this->expectException(InvalidConfigException::class);
@@ -43,10 +35,6 @@ class ServiceBusEventTest extends TestCase
             ->withResources('resources', ['data']);
     }
 
-    /**
-     * @throws InvalidConfigException
-     * @throws Throwable
-     */
     public function testShouldAllocateAttributesToServiceBusObject()
     {
         $resource = [
@@ -74,10 +62,6 @@ class ServiceBusEventTest extends TestCase
         $this->assertEquals($resource, $serviceBusData['payload']['resource']);
     }
 
-    /**
-     * @throws InvalidConfigException
-     * @throws Throwable
-     */
     public function testShouldAllocateAttributesToServiceBusObjectWithPayload()
     {
         $payload = [
@@ -106,10 +90,6 @@ class ServiceBusEventTest extends TestCase
         $this->assertEquals($payload, $serviceBusData['payload']);
     }
 
-    /**
-     * @throws InvalidConfigException
-     * @throws Throwable
-     */
     public function testShouldReturnCorrectEventForSpecificVersion()
     {
         $serviceBusVersion1 = ServiceBusEvent::create('test', config_v1())

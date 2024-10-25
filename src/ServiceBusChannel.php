@@ -33,11 +33,9 @@ class ServiceBusChannel
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->client = new Client(
-            [
-                'base_uri' => Arr::get($this->config, 'endpoint'),
-            ]
-        );
+        $this->client = new Client([
+            'base_uri' => Arr::get($this->config, 'endpoint'),
+        ]);
     }
 
     /**
@@ -60,16 +58,11 @@ class ServiceBusChannel
 
         if (Arr::get($this->config, 'enabled') == false) {
             if (!in_array($eventType, $dontReport)) {
-                Log::debug(
-                    "$eventType service bus notification [disabled]",
-                    [
-                        'event' => $eventType,
-                        'params' => $params,
-                        'tags' => [
-                            'service-bus',
-                        ],
-                    ]
-                );
+                Log::debug("$eventType service bus notification [disabled]", [
+                    'event' => $eventType,
+                    'params' => $params,
+                    'tags' => ['service-bus'],
+                ]);
             }
 
             return;
@@ -93,31 +86,21 @@ class ServiceBusChannel
                 ]
             );
 
-            Log::info(
-                "$eventType service bus notification",
-                [
-                    'event' => $eventType,
-                    'params' => $params,
-                    'tags' => [
-                        'service-bus',
-                    ],
-                    'status' => $response->getStatusCode(),
-                ]
-            );
+            Log::info("$eventType service bus notification", [
+                'event' => $eventType,
+                'params' => $params,
+                'tags' => ['service-bus'],
+                'status' => $response->getStatusCode(),
+            ]);
         } catch (RequestException $exception) {
             $code = $exception->getCode();
 
             if (in_array($code, [401, 403])) {
-                Log::info(
-                    "$code received. Logging in and retrying.",
-                    [
-                        'event' => $eventType,
-                        'params' => $params,
-                        'tags' => [
-                            'service-bus',
-                        ],
-                    ]
-                );
+                Log::info("$code received. Logging in and retrying.", [
+                    'event' => $eventType,
+                    'params' => $params,
+                    'tags' => ['service-bus'],
+                ]);
 
                 // clear the invalid token //
                 Cache::forget($this->generateTokenKey());
@@ -145,45 +128,54 @@ class ServiceBusChannel
      */
     private function getToken(): string
     {
-        return Cache::rememberForever(
-            $this->generateTokenKey(),
-            function () {
-                try {
-                    $version = intval($this->config['version']);
+        return Cache::rememberForever($this->generateTokenKey(), function () {
+            try {
+                $version = intval($this->config['version']);
 
-                    if ($version < 2) {
-                        $response = $this->client->request(
-                            'POST',
-                            $this->getUrl('login'),
-                            [
-                                'json' => Arr::only($this->config, ['username', 'password', 'venture_config_id']),
-                            ]
-                        );
-                    } else {
-                        $response = $this->client->request(
-                            'POST',
-                            $this->getUrl('login'),
-                            [
-                                'json' => Arr::only($this->config, ['username', 'password', 'node_id']),
-                            ]
-                        );
-                    }
-
-                    $body = json_decode((string) $response->getBody(), true);
-
-                    $code = (int) Arr::get($body, 'code', $response->getStatusCode());
-
-                    switch ($code) {
-                        case 200:
-                            return $body['token'];
-                        default:
-                            throw CouldNotSendNotification::loginFailed($response);
-                    }
-                } catch (RequestException $exception) {
-                    throw CouldNotSendNotification::requestFailed($exception);
+                if ($version < 2) {
+                    $response = $this->client->request(
+                        'POST',
+                        $this->getUrl('login'),
+                        [
+                            'json' => Arr::only($this->config, [
+                                'username',
+                                'password',
+                                'venture_config_id',
+                            ]),
+                        ]
+                    );
+                } else {
+                    $response = $this->client->request(
+                        'POST',
+                        $this->getUrl('login'),
+                        [
+                            'json' => Arr::only($this->config, [
+                                'username',
+                                'password',
+                                'node_id',
+                            ]),
+                        ]
+                    );
                 }
+
+                $body = json_decode((string) $response->getBody(), true);
+
+                $code = (int) Arr::get(
+                    $body,
+                    'code',
+                    $response->getStatusCode()
+                );
+
+                switch ($code) {
+                    case 200:
+                        return $body['token'];
+                    default:
+                        throw CouldNotSendNotification::loginFailed($response);
+                }
+            } catch (RequestException $exception) {
+                throw CouldNotSendNotification::requestFailed($exception);
             }
-        );
+        });
     }
 
     /**
@@ -203,13 +195,10 @@ class ServiceBusChannel
         if ($version < 2) {
             return md5(
                 'service-bus-token' .
-                Arr::get($this->config, 'venture_config_id')
+                    Arr::get($this->config, 'venture_config_id')
             );
         }
 
-        return md5(
-            'service-bus-token' .
-            Arr::get($this->config, 'node_id')
-        );
+        return md5('service-bus-token' . Arr::get($this->config, 'node_id'));
     }
 }

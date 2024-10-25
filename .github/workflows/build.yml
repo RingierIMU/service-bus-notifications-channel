@@ -10,13 +10,19 @@ jobs:
         illuminate-version:
           - 9
           - 10
+          - 11
         php-version:
           - 8.0
           - 8.1
           - 8.2
+          - 8.3
         exclude:
           - illuminate-version: 10
             php-version: 8.0
+          - illuminate-version: 11
+            php-version: 8.0
+          - illuminate-version: 11
+            php-version: 8.1
 
     runs-on: ubuntu-latest
 
@@ -42,7 +48,7 @@ jobs:
             illuminate/support:^${{ matrix.illuminate-version }}
 
       - name: Lint Code
-        run: vendor/bin/tlint
+        run: composer lint
 
       - name: Run tests
-        run: vendor/bin/phpunit
+        run: composer test
