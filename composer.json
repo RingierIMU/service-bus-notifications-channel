@@ -52,6 +52,7 @@
     ]
   },
   "scripts": {
+    "lint": "vendor/bin/tlint",
     "test": "vendor/bin/phpunit"
   }
 }

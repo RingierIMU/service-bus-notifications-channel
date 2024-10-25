@@ -6,12 +6,9 @@ use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Mockery;
-use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusChannel;
-use stdClass;
 use Throwable;
 
 /**

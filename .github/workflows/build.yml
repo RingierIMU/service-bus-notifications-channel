@@ -48,7 +48,7 @@ jobs:
             illuminate/support:^${{ matrix.illuminate-version }}
 
       - name: Lint Code
-        run: vendor/bin/tlint
+        run: composer lint
 
       - name: Run tests
-        run: vendor/bin/phpunit
+        run: composer test
