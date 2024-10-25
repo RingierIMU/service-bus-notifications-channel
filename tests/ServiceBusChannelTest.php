@@ -2,11 +2,16 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Mockery;
+use Mockery\MockInterface;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusChannel;
+use stdClass;
 use Throwable;
 
 /**
@@ -14,15 +19,8 @@ use Throwable;
  */
 class ServiceBusChannelTest extends TestCase
 {
-    public function testShouldCreateServiceBusChannelInstance()
-    {
-        $this->mockAll();
-        $serviceChannel = new ServiceBusChannel(config_v2());
-
-        $this->assertNotNull($serviceChannel);
-    }
-
     /**
+     * @throws GuzzleException
      * @throws CouldNotSendNotification
      * @throws Throwable
      */
@@ -57,5 +55,9 @@ class ServiceBusChannelTest extends TestCase
         Log::shouldReceive("info")->once()->andReturnNull();
 
         Log::shouldReceive("error")->once()->andReturnNull();
+
+        Mockery::mock(Client::class, function (MockInterface $mock) {
+            $mock->shouldReceive("execute")->andReturn(new stdClass())->once();
+        });
     }
 }
