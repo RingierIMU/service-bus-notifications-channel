@@ -25,6 +25,6 @@ class TestNotification extends Notification
             ->withReference(uniqid())
             ->withRoute("api")
             ->createdAt(Carbon::now())
-            ->withResources("resources", ["data"]);
+            ->withResource("resources", ["data"]);
     }
 }
