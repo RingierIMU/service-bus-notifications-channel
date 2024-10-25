@@ -3,9 +3,10 @@
 namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
 
 use Illuminate\Config\Repository;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusServiceProvider;
 
-class TestCase extends \Orchestra\Testbench\TestCase
+class TestCase extends OrchestraTestCase
 {
     protected function getPackageProviders($app)
     {
