@@ -59,7 +59,5 @@ class ServiceBusChannelTest extends TestCase
         Log::shouldReceive("info")->once()->andReturnNull();
 
         Log::shouldReceive("error")->once()->andReturnNull();
-
-        Http::fake();
     }
 }

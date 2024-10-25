@@ -24,9 +24,10 @@
     "ext-openssl": "*",
     "ext-pcntl": "*",
     "ext-sockets": "*",
-    "mockery/mockery": "^1.4.4 || ^1.6",
-    "phpunit/phpunit": "^9.5.10 || ^10.1 || ^11.0.1",
-    "tightenco/tlint": "^8 || ^9"
+    "mockery/mockery": "^1",
+    "phpunit/phpunit": "^9 || ^10 || ^11",
+    "tightenco/tlint": "^8 || ^9",
+    "orchestra/testbench": "^7 || ^8 || ^9"
   },
   "extra": {
     "include_files": [
