@@ -39,7 +39,7 @@ class ServiceBusSQSChannel
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
         $eventType = $event->getEventType();
-        $params = $event->getParams();
+        $message = $event->getParams();
         $dontReport = Arr::get($this->config, 'dont_report', []);
 
         if (Arr::get($this->config, 'enabled') == false) {
@@ -48,7 +48,7 @@ class ServiceBusSQSChannel
                     "$eventType service bus notification [disabled]",
                     [
                         'event' => $eventType,
-                        'params' => $params,
+                        'params' => $message,
                         'tags' => [
                             'service-bus',
                         ],
@@ -59,17 +59,23 @@ class ServiceBusSQSChannel
             return;
         }
 
-        $message = $event->getParams();
-
         if (!isset($message['from'], $message['events'][0])) {
-            Log::error('Invalid payload structure', ['message' => $message]);
+            Log::error('Invalid message structure', ['message' => $message]);
             return;
         }
 
+        $queueUrl = Arr::get($this->config, 'sqs.queue_url');
+        $isFifoQueue = strpos($queueUrl, '.fifo') !== false;
+
         $params = [
-            'QueueUrl' => Arr::get($this->config, 'sqs.queue_url'),
+            'QueueUrl' => $queueUrl,
             'MessageBody' => json_encode($message),
         ];
+
+        if ($isFifoQueue) {
+            $params['MessageGroupId'] = $message['from'];
+            $params['MessageDeduplicationId'] = md5(json_encode($message));
+        }
 
         try {
             $response = $this->sqs->sendMessage($params);
@@ -80,6 +86,8 @@ class ServiceBusSQSChannel
                 'message_id' => $response->get('MessageId'),
                 'event' => $eventName,
             ]);
+
+            $this->hasAttemptedRefresh = false;
         } catch (AwsException $exception) {
             $code = $exception->getAwsErrorCode();
 
