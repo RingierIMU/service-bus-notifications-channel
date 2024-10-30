@@ -39,7 +39,7 @@ class ServiceBusSQSChannel
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
         $eventType = $event->getEventType();
-        $message = $event->getParams();
+        $params = $event->getParams();
         $dontReport = Arr::get($this->config, 'dont_report', []);
 
         if (Arr::get($this->config, 'enabled') == false) {
@@ -48,7 +48,7 @@ class ServiceBusSQSChannel
                     "$eventType service bus notification [disabled]",
                     [
                         'event' => $eventType,
-                        'params' => $message,
+                        'params' => $params,
                         'tags' => [
                             'service-bus',
                         ],
@@ -59,28 +59,28 @@ class ServiceBusSQSChannel
             return;
         }
 
-        if (!isset($message['from'], $message['events'][0])) {
-            Log::error('Invalid message structure', ['message' => $message]);
+        if (!isset($params['from'], $params['events'][0])) {
+            Log::error('Invalid message structure', ['params' => $params]);
             return;
         }
 
         $queueUrl = Arr::get($this->config, 'sqs.queue_url');
         $isFifoQueue = strpos($queueUrl, '.fifo') !== false;
 
-        $params = [
+        $payloadSqs = [
             'QueueUrl' => $queueUrl,
-            'MessageBody' => json_encode($message),
+            'MessageBody' => json_encode($params),
         ];
 
         if ($isFifoQueue) {
-            $params['MessageGroupId'] = $message['from'];
-            $params['MessageDeduplicationId'] = md5(json_encode($message));
+            $payloadSqs['MessageGroupId'] = $params['from'];
+            $payloadSqs['MessageDeduplicationId'] = md5(json_encode($params$));
         }
 
         try {
-            $response = $this->sqs->sendMessage($params);
+            $response = $this->sqs->sendMessage($payloadSqs);
 
-            $eventName = $message['events'][0];
+            $eventName = $params['events'][0];
 
             Log::info("{$eventName} sent to bus queue", [
                 'message_id' => $response->get('MessageId'),
@@ -94,7 +94,7 @@ class ServiceBusSQSChannel
             if (in_array($code, ['ExpiredToken', 'UnrecognizedClientException', 'InvalidClientTokenId'])) {
                 Log::info("$code received. Refreshing credentials and retrying.", [
                     'event' => $eventType,
-                    'params' => $message,
+                    'params' => $params,
                     'aws_error_code' => $code,
                     'aws_error_message' => $exception->getAwsErrorMessage(),
                     'tags' => ['service-bus'],
