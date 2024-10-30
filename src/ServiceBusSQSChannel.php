@@ -74,7 +74,7 @@ class ServiceBusSQSChannel
 
         if ($isFifoQueue) {
             $payloadSqs['MessageGroupId'] = $params['from'];
-            $payloadSqs['MessageDeduplicationId'] = md5(json_encode($params$));
+            $payloadSqs['MessageDeduplicationId'] = md5(json_encode($params));
         }
 
         try {
@@ -84,7 +84,7 @@ class ServiceBusSQSChannel
 
             Log::info("{$eventName} sent to bus queue", [
                 'message_id' => $response->get('MessageId'),
-                'event' => $eventName,
+                'params' => $params,
             ]);
 
             $this->hasAttemptedRefresh = false;
