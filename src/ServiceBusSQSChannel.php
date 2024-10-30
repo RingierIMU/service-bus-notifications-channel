@@ -25,7 +25,7 @@ class ServiceBusSQSChannel
     protected function initializeSqsClient(): void
     {
         $this->sqs = new SqsClient([
-            'region' => Arr::get($this->config, 'sqs.region'),
+            'region' => Arr::get($this->config, 'sqs.region', 'eu-west-1'),
             'version' => 'latest',
             'credentials' => [
                 'key' => Arr::get($this->config, 'sqs.key'),
@@ -77,15 +77,22 @@ class ServiceBusSQSChannel
             $payloadSqs['MessageDeduplicationId'] = md5(json_encode($params));
         }
 
+        $this->sendMessageToSqs($payloadSqs, $eventType, $params, $dontReport);
+    }
+
+    protected function sendMessageToSqs(array $payloadSqs, string $eventType, array $params, array $dontReport): void
+    {
         try {
             $response = $this->sqs->sendMessage($payloadSqs);
 
             $eventName = $params['events'][0];
 
-            Log::info("{$eventName} sent to bus queue", [
-                'message_id' => $response->get('MessageId'),
-                'params' => $params,
-            ]);
+            if (!in_array($eventType, $dontReport)) {
+                Log::info("{$eventName} sent to bus queue", [
+                    'message_id' => $response->get('MessageId'),
+                    'params' => $params,
+                ]);
+            }
 
             $this->hasAttemptedRefresh = false;
         } catch (AwsException $exception) {
@@ -105,7 +112,7 @@ class ServiceBusSQSChannel
 
                     $this->initializeSqsClient();
 
-                    $this->send($notifiable, $notification);
+                    $this->sendMessageToSqs($payloadSqs, $eventType, $params, $dontReport);
                 } else {
                     $this->hasAttemptedRefresh = false;
 
