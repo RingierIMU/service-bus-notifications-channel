@@ -10,9 +10,10 @@ use Illuminate\Support\Facades\Log;
 class ServiceBusSQSChannel
 {
     protected array $config;
+
     protected SqsClient $sqs;
 
-    public function __construct(array $config = [], ?SqsClient $sqs = null)
+    public function __construct(array $config = [], SqsClient|null $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
@@ -44,7 +45,7 @@ class ServiceBusSQSChannel
                         'tags' => [
                             'service-bus',
                         ],
-                    ]
+                    ],
                 );
             }
 

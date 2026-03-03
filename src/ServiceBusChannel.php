@@ -18,13 +18,15 @@ use Throwable;
 class ServiceBusChannel
 {
     private readonly Client $client;
+
     protected bool $hasAttemptedLogin = false;
+
     protected array $config = [];
 
     /**
      * ServiceBusChannel constructor.
      */
-    public function __construct(array $config = [], ?Client $client = null)
+    public function __construct(array $config = [], Client|null $client = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
@@ -36,7 +38,6 @@ class ServiceBusChannel
     /**
      * Send the given notification.
      *
-     * @param mixed        $notifiable
      *
      * @throws CouldNotSendNotification
      * @throws GuzzleException
@@ -77,7 +78,7 @@ class ServiceBusChannel
                 [
                     'headers' => $headers,
                     'json' => [$params],
-                ]
+                ],
             );
 
             Log::info("$eventType service bus notification", [
@@ -122,7 +123,7 @@ class ServiceBusChannel
     {
         return Cache::rememberForever($this->generateTokenKey(), function () {
             try {
-                $version = intval($this->config['version']);
+                $version = (int) ($this->config['version']);
 
                 if ($version < 2) {
                     $response = $this->client->request(
@@ -134,7 +135,7 @@ class ServiceBusChannel
                                 'password',
                                 'venture_config_id',
                             ]),
-                        ]
+                        ],
                     );
                 } else {
                     $response = $this->client->request(
@@ -146,7 +147,7 @@ class ServiceBusChannel
                                 'password',
                                 'node_id',
                             ]),
-                        ]
+                        ],
                     );
                 }
 
@@ -155,7 +156,7 @@ class ServiceBusChannel
                 $code = (int) Arr::get(
                     $body,
                     'code',
-                    $response->getStatusCode()
+                    $response->getStatusCode(),
                 );
 
                 return match ($code) {
@@ -175,12 +176,12 @@ class ServiceBusChannel
 
     public function generateTokenKey(): string
     {
-        $version = intval($this->config['version']);
+        $version = (int) ($this->config['version']);
 
         if ($version < 2) {
             return md5(
-                'service-bus-token' .
-                    Arr::get($this->config, 'venture_config_id')
+                'service-bus-token'
+                    . Arr::get($this->config, 'venture_config_id'),
             );
         }
 

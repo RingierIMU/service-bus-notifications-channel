@@ -51,7 +51,7 @@ it('logs debug when disabled and event not in dont_report', function () {
         ->once()
         ->with(
             Mockery::pattern('/test.*\[disabled\]/'),
-            Mockery::type('array')
+            Mockery::type('array'),
         );
 
     $sqsMock = Mockery::mock(SqsClient::class);
@@ -59,7 +59,7 @@ it('logs debug when disabled and event not in dont_report', function () {
 
     $channel = new ServiceBusSQSChannel(
         makeSqsConfig(['enabled' => false, 'dont_report' => []]),
-        $sqsMock
+        $sqsMock,
     );
 
     $channel->send(new AnonymousNotifiable(), new TestNotification());
@@ -73,7 +73,7 @@ it('suppresses log when disabled and event in dont_report', function () {
 
     $channel = new ServiceBusSQSChannel(
         makeSqsConfig(['enabled' => false, 'dont_report' => ['test']]),
-        $sqsMock
+        $sqsMock,
     );
 
     $channel->send(new AnonymousNotifiable(), new TestNotification());

@@ -21,7 +21,7 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Could not get an auth token from the server: ' . $exception->getMessage());
@@ -39,7 +39,7 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Something went wrong logging in');
@@ -54,7 +54,7 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Something went wrong logging the event: ' . $exception->getMessage());

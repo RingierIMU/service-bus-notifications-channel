@@ -3,6 +3,7 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Illuminate\Support\ServiceProvider;
+use Override;
 
 /**
  * Class ServiceBusServiceProvider.
@@ -19,7 +20,7 @@ class ServiceBusServiceProvider extends ServiceProvider
     /**
      * Register the application services.
      */
-    #[\Override]
+    #[Override]
     public function register(): void
     {
     }
