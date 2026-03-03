@@ -23,10 +23,10 @@
   },
   "require-dev": {
     "mockery/mockery": "^1.6",
-    "phpunit/phpunit": "^10.5 || ^11.0 || ^12.0",
     "tightenco/tlint": "^8 || ^9",
     "orchestra/testbench": "^9.0 || ^10.0",
-    "nunomaduro/collision": "^7.0 || ^8.0"
+    "nunomaduro/collision": "^7.0 || ^8.0",
+    "pestphp/pest": "^4.0"
   },
   "extra": {
     "laravel": {
@@ -50,6 +50,11 @@
   },
   "scripts": {
     "lint": "vendor/bin/tlint",
-    "test": "vendor/bin/testbench package:test"
+    "test": "vendor/bin/pest"
+  },
+  "config": {
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   }
 }
