@@ -1,7 +1,23 @@
 # Service Bus Notifications Channel
 
+[![CI](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml/badge.svg)](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml)
+![PHP Version](https://img.shields.io/badge/php-8.3%2B-777BB4?logo=php&logoColor=white)
+![Laravel Version](https://img.shields.io/badge/laravel-11%20%7C%2012-FF2D20?logo=laravel&logoColor=white)
+
 This is a Laravel package that provides notification channels for
 sending notifications to the _RingierSA Service Bus_.
+
+## Supported Versions
+
+| PHP | Laravel 11.x | Laravel 12.x |
+|-----|:------------:|:------------:|
+| 8.3 | Yes | Yes |
+| 8.4 | Yes | Yes |
+
+## Requirements
+
+- PHP 8.3 or higher
+- Laravel 11.x or 12.x
 
 ## Installation
 
