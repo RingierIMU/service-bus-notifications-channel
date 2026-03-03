@@ -18,17 +18,17 @@ use Throwable;
 class ServiceBusChannel
 {
     private readonly Client $client;
-    protected $hasAttemptedLogin = false;
-    protected $config = [];
+    protected bool $hasAttemptedLogin = false;
+    protected array $config = [];
 
     /**
      * ServiceBusChannel constructor.
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], ?Client $client = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->client = new Client([
+        $this->client = $client ?? new Client([
             'base_uri' => Arr::get($this->config, 'endpoint'),
         ]);
     }

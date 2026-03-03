@@ -4,6 +4,30 @@ use Carbon\Carbon;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 
+function config_v1(): array
+{
+    return [
+        'enabled' => true,
+        'venture_config_id' => '123456789',
+        'username' => 'username',
+        'password' => 'password',
+        'version' => '1.0.0',
+        'culture' => 'en_GB',
+        'endpoint' => 'https://bus.staging.ritdu.tech/v1/',
+    ];
+}
+
+function config_v2(): array
+{
+    return [
+        'enabled' => true,
+        'node_id' => '123456789',
+        'username' => 'username',
+        'password' => 'password',
+        'version' => '2.0.0',
+        'endpoint' => 'https://bus.staging.ritdu.tech/v1/',
+    ];
+}
 
 test('should create service bus event instance', function () {
     $serviceBus = new ServiceBusEvent('test', config_v2());

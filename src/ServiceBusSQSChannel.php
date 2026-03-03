@@ -12,11 +12,11 @@ class ServiceBusSQSChannel
     protected array $config;
     protected SqsClient $sqs;
 
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], ?SqsClient $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->sqs = new SqsClient([
+        $this->sqs = $sqs ?? new SqsClient([
             'region' => Arr::get($this->config, 'sqs.region'),
             'version' => 'latest',
             'credentials' => [
