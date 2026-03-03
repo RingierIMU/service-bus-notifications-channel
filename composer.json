@@ -26,8 +26,7 @@
     "tightenco/tlint": "^8 || ^9",
     "orchestra/testbench": "^9.0 || ^10.0",
     "nunomaduro/collision": "^7.0 || ^8.0",
-    "pestphp/pest": "^4.0",
-    "driftingly/rector-laravel": "^2.1"
+    "pestphp/pest": "^4.0"
   },
   "extra": {
     "laravel": {
