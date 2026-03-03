@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class ServiceBusSQSChannel
 {
+    protected array $config;
     protected SqsClient $sqs;
 
     public function __construct(array $config = [])
@@ -25,7 +26,7 @@ class ServiceBusSQSChannel
         ]);
     }
 
-    public function send($notifiable, Notification $notification)
+    public function send($notifiable, Notification $notification): void
     {
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);

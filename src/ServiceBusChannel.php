@@ -17,17 +17,12 @@ use Throwable;
  */
 class ServiceBusChannel
 {
-    /**
-     * @var Client
-     */
-    private $client;
+    private readonly Client $client;
     protected $hasAttemptedLogin = false;
     protected $config = [];
 
     /**
      * ServiceBusChannel constructor.
-     *
-     * @param array $config
      */
     public function __construct(array $config = [])
     {
@@ -42,13 +37,12 @@ class ServiceBusChannel
      * Send the given notification.
      *
      * @param mixed        $notifiable
-     * @param Notification $notification
      *
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function send($notifiable, Notification $notification)
+    public function send($notifiable, Notification $notification): void
     {
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
@@ -123,8 +117,6 @@ class ServiceBusChannel
     /**
      * @throws CouldNotSendNotification
      * @throws GuzzleException
-     *
-     * @return string
      */
     private function getToken(): string
     {
@@ -166,29 +158,22 @@ class ServiceBusChannel
                     $response->getStatusCode()
                 );
 
-                switch ($code) {
-                    case 200:
-                        return $body['token'];
-                    default:
-                        throw CouldNotSendNotification::loginFailed($response);
-                }
+                return match ($code) {
+                    200 => $body['token'],
+                    default => throw CouldNotSendNotification::loginFailed($response),
+                };
             } catch (RequestException $exception) {
                 throw CouldNotSendNotification::requestFailed($exception);
             }
         });
     }
 
-    /**
-     * @param string $endpoint
-     *
-     * @return string
-     */
     private function getUrl(string $endpoint): string
     {
         return $endpoint;
     }
 
-    public function generateTokenKey()
+    public function generateTokenKey(): string
     {
         $version = intval($this->config['version']);
 
