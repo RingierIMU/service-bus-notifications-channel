@@ -34,25 +34,27 @@ class ServiceBusEvent
         'other',
     ];
 
-    protected $eventType;
-    protected $reference;
+    protected string $reference;
+
     protected $culture;
+
     protected $actionType;
+
     protected $actionReference;
-    protected $createdAt;
+
+    protected Carbon $createdAt;
+
     protected $payload;
+
     protected $route;
+
     protected $config = [];
 
     /**
      * ServiceBusEvent constructor.
-     *
-     * @param string $eventType
-     * @param array  $config
      */
-    public function __construct(string $eventType, array $config = [])
+    public function __construct(protected string $eventType, array $config = [])
     {
-        $this->eventType = $eventType;
         $this->config = $config ?: config('services.service_bus');
         $this->createdAt = Carbon::now();
         $this->reference = $this->generateUUID();
@@ -64,13 +66,8 @@ class ServiceBusEvent
      * Required config:
      * - services.service_bus.from
      * - services.service_bus.version
-     *
-     * @param string $eventType
-     * @param array  $config
-     *
-     * @return ServiceBusEvent
      */
-    public static function create(string $eventType, array $config = []): self
+    public static function create(string $eventType, array $config = []): static
     {
         return new static($eventType, $config);
     }
@@ -79,12 +76,8 @@ class ServiceBusEvent
      * Source reference for the event.
      *
      * If this is not sent a UUID will be generated and sent with the request.
-     *
-     * @param string $reference
-     *
-     * @return ServiceBusEvent
      */
-    public function withReference(string $reference): self
+    public function withReference(string $reference): static
     {
         $this->reference = $reference;
 
@@ -95,12 +88,8 @@ class ServiceBusEvent
      * ISO representation of the language and culture active on the system when the event was created.
      *
      * This can be set here for each individual event, or it can be set in config services.service_bus.culture
-     *
-     * @param string $culture
-     *
-     * @return ServiceBusEvent
      */
-    public function withCulture(string $culture): self
+    public function withCulture(string $culture): static
     {
         $this->culture = $culture;
 
@@ -114,14 +103,10 @@ class ServiceBusEvent
      * The reference is who created the event where relevant to the type.  Use this to track e.g. which user created a
      * listing. or that a user registered from facebook
      *
-     * @param string $type
-     * @param string $reference
      *
      * @throws InvalidConfigException
-     *
-     * @return ServiceBusEvent
      */
-    public function withAction(string $type, string $reference): self
+    public function withAction(string $type, string $reference): static
     {
         if (in_array($type, self::$actionTypes)) {
             $this->actionType = $type;
@@ -137,12 +122,8 @@ class ServiceBusEvent
      * Event recipe routing, optional and defaulted to empty.  Can be used in a recipe for example to choose different
      * services because identified as “high_priority” or “testing”, entirely up to the venture how they want to use
      * this to switch on their recipe.
-     *
-     * @param string $route
-     *
-     * @return ServiceBusEvent
      */
-    public function withRoute(string $route): self
+    public function withRoute(string $route): static
     {
         $this->route = $route;
 
@@ -156,12 +137,9 @@ class ServiceBusEvent
      *
      * @deprecated Use withResource and withPayload instead.
      *
-     * @param string $resourceName
-     * @param array  $resource
-     *
      * @return $this
      */
-    public function withResources(string $resourceName, array $resource)
+    public function withResources(string $resourceName, array $resource): static
     {
         $this->payload[$resourceName] = $resource;
 
@@ -169,13 +147,11 @@ class ServiceBusEvent
     }
 
     /**
-     * @param string $resourceName
      * @param array|JsonResource $resource
-     * @param null|Request $request
      *
      * @return this
      */
-    public function withResource(string $resourceName, $resource, Request $request = null): self
+    public function withResource(string $resourceName, $resource, Request $request = null): static
     {
         if (!is_array($resource)) {
             if ($resource instanceof JsonResource) {
@@ -191,11 +167,9 @@ class ServiceBusEvent
     }
 
     /**
-     * @param array $payload
-     *
      * @return $this
      */
-    public function withPayload(array $payload)
+    public function withPayload(array $payload): static
     {
         $this->payload = [];
 
@@ -208,12 +182,8 @@ class ServiceBusEvent
 
     /**
      * Date time of the event creation on the event source in ISO8601/RFC3339 format.
-     *
-     * @param Carbon $createdAtDate
-     *
-     * @return ServiceBusEvent
      */
-    public function createdAt(Carbon $createdAtDate): self
+    public function createdAt(Carbon $createdAtDate): static
     {
         $this->createdAt = $createdAtDate;
 
@@ -222,8 +192,6 @@ class ServiceBusEvent
 
     /**
      * Returns the culture to be use, will use config services.service_bus.culture if not set on the event.
-     *
-     * @return string
      */
     protected function getCulture(): string
     {
@@ -232,8 +200,6 @@ class ServiceBusEvent
 
     /**
      * Gets the extra data to be sent as the payload param.
-     *
-     * @return array
      */
     protected function getPayload(): array
     {
@@ -244,8 +210,6 @@ class ServiceBusEvent
      * Generates a v4 UUID.
      *
      * @throws Throwable
-     *
-     * @return string
      */
     private function generateUUID(): string
     {
@@ -256,12 +220,10 @@ class ServiceBusEvent
      * Return the event as an array that can be sent to the service.
      *
      * @throws Throwable
-     *
-     * @return array
      */
     public function getParams(): array
     {
-        $version = intval($this->config['version']);
+        $version = (int) ($this->config['version']);
 
         if ($version < 2) {
             return [
@@ -291,10 +253,7 @@ class ServiceBusEvent
         ];
     }
 
-    /**
-     * @return string
-     */
-    public function getEventType()
+    public function getEventType(): string
     {
         return $this->eventType;
     }

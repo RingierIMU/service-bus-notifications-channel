@@ -1,14 +1,30 @@
 # Service Bus Notifications Channel
 
+[![CI](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml/badge.svg)](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml)
+![PHP Version](https://img.shields.io/badge/php-8.3%2B-777BB4?logo=php&logoColor=white)
+![Laravel Version](https://img.shields.io/badge/laravel-11%20%7C%2012-FF2D20?logo=laravel&logoColor=white)
+
 This is a Laravel package that provides notification channels for
 sending notifications to the _RingierSA Service Bus_.
+
+## Supported Versions
+
+| PHP | Laravel 11.x | Laravel 12.x |
+|-----|:------------:|:------------:|
+| 8.3 | Yes | Yes |
+| 8.4 | Yes | Yes |
+
+## Requirements
+
+- PHP 8.3 or higher
+- Laravel 11.x or 12.x
 
 ## Installation
 
 Install the package into your project via composer:
 
 ```bash
-composer require ringiersa/service-bus-notifications-channel
+composer require ringierimu/service-bus-notifications-channel
 ```
 
 ## Configuration
@@ -39,7 +55,7 @@ SERVICE_BUS_ENDPOINT=https://bus.staging.ritdu.tech/v1/
 
 You can get the `bus-node-id`, `bus-username` and `bus-password` from the _RingierSA_ Service Bus team.
 
-## usage
+## Usage
 
 Add something like the following example to a notification class:
 
@@ -48,8 +64,8 @@ use App\Models\Article;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Queue\SerializesModels;
-use RingierSA\ServiceBusNotificationsChannel\ServiceBusChannel;
-use RingierSA\ServiceBusNotificationsChannel\ServiceBusEvent;
+use Ringierimu\ServiceBusNotificationsChannel\ServiceBusChannel;
+use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 
 class ArticleCreatedNotification extends Notification
 {
@@ -96,7 +112,7 @@ $article = Article::create([
 
 That will use the `ServiceBusChannel` to send the notification to the _RingierSA_ Service Bus.
 
-## sqs usage
+## SQS Usage
 
 The API endpoint is rate limited, so it's not suitable for high volume notifications.
 
@@ -132,7 +148,7 @@ The values for `queue-url`, `key` and `secret` can be obtained from the _Ringier
 The next change is to send the service bus notifications via the `ServiceBusSQSChannel` by changing the notification class:
 
 ```php
-use RingierSA\ServiceBusNotificationsChannel\ServiceBusSQSChannel;
+use Ringierimu\ServiceBusNotificationsChannel\ServiceBusSQSChannel;
 
 class ArticleCreatedNotification extends Notification
 {
@@ -148,3 +164,11 @@ class ArticleCreatedNotification extends Notification
 Now the notification will be sent directly to an `SQS` queue in the service bus, instead of via the API endpoint.
 
 We recommend you do not queue the notification. Send it `afterResponse`, the time to send the notification to `SQS` is minimal.
+
+## Testing
+
+```bash
+composer test
+```
+
+This runs the [Pest](https://pestphp.com/) test suite.

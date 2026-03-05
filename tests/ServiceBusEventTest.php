@@ -1,140 +1,152 @@
 <?php
 
-namespace Ringierimu\ServiceBusNotificationsChannel\Tests;
-
 use Carbon\Carbon;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Ringierimu\ServiceBusNotificationsChannel\ServiceBusEvent;
 
-class ServiceBusEventTest extends TestCase
+function config_v1(): array
 {
-    public function testShouldCreateServiceBusEventInstance()
-    {
-        $serviceBus = new ServiceBusEvent('test', config_v2());
+    return [
+        'enabled' => true,
+        'venture_config_id' => '123456789',
+        'username' => 'username',
+        'password' => 'password',
+        'version' => '1.0.0',
+        'culture' => 'en_GB',
+        'endpoint' => 'https://bus.staging.ritdu.tech/v1/',
+    ];
+}
 
-        $this->assertEquals('test', $serviceBus->getEventType());
-    }
+function config_v2(): array
+{
+    return [
+        'enabled' => true,
+        'node_id' => '123456789',
+        'username' => 'username',
+        'password' => 'password',
+        'version' => '2.0.0',
+        'endpoint' => 'https://bus.staging.ritdu.tech/v1/',
+    ];
+}
 
-    public function testShouldCreateServiceBusEventInstanceViaStaticCall()
-    {
-        $serviceBus = ServiceBusEvent::create('test', config_v2());
+test('should create service bus event instance', function () {
+    $serviceBus = new ServiceBusEvent('test', config_v2());
 
-        $this->assertEquals('test', $serviceBus->getEventType());
-    }
+    expect($serviceBus->getEventType())->toEqual('test');
+});
 
-    public function testShouldThrowInvalidConfigException()
-    {
-        $this->expectException(InvalidConfigException::class);
+test('should create service bus event instance via static call', function () {
+    $serviceBus = ServiceBusEvent::create('test', config_v2());
 
-        ServiceBusEvent::create('test')
-            ->withAction('test', uniqid())
-            ->withCulture('en')
-            ->withReference(uniqid())
-            ->withRoute('api')
-            ->createdAt(Carbon::now())
-            ->withResources('resources', ['data']);
-    }
+    expect($serviceBus->getEventType())->toEqual('test');
+});
 
-    public function testShouldAllocateAttributesToServiceBusObject()
-    {
-        $resource = [
+test('should throw invalid config exception', function () {
+    ServiceBusEvent::create('test')
+        ->withAction('test', uniqid())
+        ->withCulture('en')
+        ->withReference(uniqid())
+        ->withRoute('api')
+        ->createdAt(Carbon::now())
+        ->withResources('resources', ['data']);
+})->throws(InvalidConfigException::class);
+
+test('should allocate attributes to service bus object', function () {
+    $resource = [
+        'user' => 'John Doe',
+        'email' => 'john@doe.com',
+        'phone' => '0123456789',
+    ];
+
+    $serviceBus = ServiceBusEvent::create('test', config_v2())
+        ->withAction('other', uniqid())
+        ->withCulture('en')
+        ->withReference(uniqid())
+        ->withRoute('api')
+        ->createdAt(Carbon::now())
+        ->withResources('resource', $resource);
+
+    $serviceBusData = $serviceBus->getParams();
+
+    expect($serviceBusData)->not->toBeEmpty();
+    expect($serviceBusData)->toHaveKey('events');
+    expect($serviceBusData)->toHaveKey('payload');
+    expect($serviceBusData['payload'])->toHaveKey('resource');
+    expect($serviceBusData['events'])->toContain('test');
+
+    expect($serviceBusData['payload']['resource'])->toEqual($resource);
+});
+
+test('should allocate attributes to service bus object with payload', function () {
+    $payload = [
+        'object' => [
             'user' => 'John Doe',
             'email' => 'john@doe.com',
             'phone' => '0123456789',
-        ];
+        ],
+    ];
 
-        $serviceBus = ServiceBusEvent::create('test', config_v2())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
-            ->withReference(uniqid())
-            ->withRoute('api')
-            ->createdAt(Carbon::now())
-            ->withResources('resource', $resource);
+    $serviceBus = ServiceBusEvent::create('test', config_v2())
+        ->withAction('other', uniqid())
+        ->withCulture('en')
+        ->withReference(uniqid())
+        ->withRoute('api')
+        ->createdAt(Carbon::now())
+        ->withPayload($payload);
 
-        $serviceBusData = $serviceBus->getParams();
+    $serviceBusData = $serviceBus->getParams();
 
-        $this->assertNotEmpty($serviceBusData);
-        $this->assertArrayHasKey('events', $serviceBusData);
-        $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertArrayHasKey('resource', $serviceBusData['payload']);
-        $this->assertContains('test', $serviceBusData['events']);
+    expect($serviceBusData)->not->toBeEmpty();
+    expect($serviceBusData)->toHaveKey('events');
+    expect($serviceBusData)->toHaveKey('payload');
+    expect($serviceBusData['events'])->toContain('test');
 
-        $this->assertEquals($resource, $serviceBusData['payload']['resource']);
-    }
+    expect($serviceBusData['payload'])->toEqual($payload);
+});
 
-    public function testShouldAllocateAttributesToServiceBusObjectWithPayload()
-    {
-        $payload = [
-            'object' => [
-                'user' => 'John Doe',
-                'email' => 'john@doe.com',
-                'phone' => '0123456789',
-            ],
-        ];
+test('should return correct event for specific version', function () {
+    $serviceBusVersion1 = ServiceBusEvent::create('test', config_v1())
+        ->withAction('other', uniqid())
+        ->withCulture('en')
+        ->withReference(uniqid())
+        ->withRoute('api')
+        ->withPayload([
+            'listing' => [],
+        ])
+        ->createdAt(Carbon::now());
 
-        $serviceBus = ServiceBusEvent::create('test', config_v2())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
-            ->withReference(uniqid())
-            ->withRoute('api')
-            ->createdAt(Carbon::now())
-            ->withPayload($payload);
+    $serviceBusVersion2 = ServiceBusEvent::create('test', config_v2())
+        ->withReference(uniqid())
+        ->withRoute('api')
+        ->withPayload([
+            'listing' => [],
+        ])
+        ->createdAt(Carbon::now());
 
-        $serviceBusData = $serviceBus->getParams();
+    $serviceBusDataVersion1 = $serviceBusVersion1->getParams();
+    $serviceBusDataVersion2 = $serviceBusVersion2->getParams();
 
-        $this->assertNotEmpty($serviceBusData);
-        $this->assertArrayHasKey('events', $serviceBusData);
-        $this->assertArrayHasKey('payload', $serviceBusData);
-        $this->assertContains('test', $serviceBusData['events']);
+    expect($serviceBusDataVersion1)->not->toBeEmpty();
+    expect($serviceBusDataVersion2)->not->toBeEmpty();
 
-        $this->assertEquals($payload, $serviceBusData['payload']);
-    }
+    expect($serviceBusDataVersion1)->toHaveKey('events');
+    expect($serviceBusDataVersion1)->toHaveKey('payload');
+    expect($serviceBusDataVersion1)->toHaveKey('from');
+    expect($serviceBusDataVersion1)->toHaveKey('venture_config_id');
+    expect($serviceBusDataVersion1)->toHaveKey('venture_reference');
+    expect($serviceBusDataVersion1)->toHaveKey('reference');
 
-    public function testShouldReturnCorrectEventForSpecificVersion()
-    {
-        $serviceBusVersion1 = ServiceBusEvent::create('test', config_v1())
-            ->withAction('other', uniqid())
-            ->withCulture('en')
-            ->withReference(uniqid())
-            ->withRoute('api')
-            ->withPayload([
-                'listing' => [],
-            ])
-            ->createdAt(Carbon::now());
+    expect($serviceBusDataVersion2)->toHaveKey('from');
+    expect($serviceBusDataVersion2)->toHaveKey('events');
+    expect($serviceBusDataVersion2)->toHaveKey('payload');
+    expect($serviceBusDataVersion2)->toHaveKey('reference');
 
-        $serviceBusVersion2 = ServiceBusEvent::create('test', config_v2())
-            ->withReference(uniqid())
-            ->withRoute('api')
-            ->withPayload([
-                'listing' => [],
-            ])
-            ->createdAt(Carbon::now());
+    expect($serviceBusDataVersion1['venture_config_id'])->not->toBeEmpty();
+    expect($serviceBusDataVersion1['venture_reference'])->not->toBeEmpty();
 
-        $serviceBusDataVersion1 = $serviceBusVersion1->getParams();
-        $serviceBusDataVersion2 = $serviceBusVersion2->getParams();
+    expect($serviceBusDataVersion2['from'])->not->toBeEmpty();
+    expect($serviceBusDataVersion2['reference'])->not->toBeEmpty();
 
-        $this->assertNotEmpty($serviceBusDataVersion1);
-        $this->assertNotEmpty($serviceBusDataVersion2);
-
-        $this->assertArrayHasKey('events', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('payload', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('from', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('venture_config_id', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('venture_reference', $serviceBusDataVersion1);
-        $this->assertArrayHasKey('reference', $serviceBusDataVersion1);
-
-        $this->assertArrayHasKey('from', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('events', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('payload', $serviceBusDataVersion2);
-        $this->assertArrayHasKey('reference', $serviceBusDataVersion2);
-
-        $this->assertNotEmpty($serviceBusDataVersion1['venture_config_id']);
-        $this->assertNotEmpty($serviceBusDataVersion1['venture_reference']);
-
-        $this->assertNotEmpty($serviceBusDataVersion2['from']);
-        $this->assertNotEmpty($serviceBusDataVersion2['reference']);
-
-        $this->assertContains('test', $serviceBusDataVersion1['events']);
-        $this->assertContains('test', $serviceBusDataVersion2['events']);
-    }
-}
+    expect($serviceBusDataVersion1['events'])->toContain('test');
+    expect($serviceBusDataVersion2['events'])->toContain('test');
+});

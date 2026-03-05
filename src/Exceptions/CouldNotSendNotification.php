@@ -12,12 +12,7 @@ use Throwable;
  */
 class CouldNotSendNotification extends Exception
 {
-    /**
-     * @param Throwable $exception
-     *
-     * @return CouldNotSendNotification
-     */
-    public static function authFailed(Throwable $exception)
+    public static function authFailed(Throwable $exception): static
     {
         Log::error(
             'Could not get an auth token from the server',
@@ -26,18 +21,13 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Could not get an auth token from the server: ' . $exception->getMessage());
     }
 
-    /**
-     * @param ResponseInterface $response
-     *
-     * @return CouldNotSendNotification
-     */
-    public static function loginFailed(ResponseInterface $response)
+    public static function loginFailed(ResponseInterface $response): static
     {
         Log::error(
             'Something went wrong logging in',
@@ -49,18 +39,13 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Something went wrong logging in');
     }
 
-    /**
-     * @param Throwable $exception
-     *
-     * @return CouldNotSendNotification
-     */
-    public static function requestFailed(Throwable $exception)
+    public static function requestFailed(Throwable $exception): static
     {
         Log::error(
             'Something went wrong logging the event',
@@ -69,7 +54,7 @@ class CouldNotSendNotification extends Exception
                 'tags' => [
                     'service-bus',
                 ],
-            ]
+            ],
         );
 
         return new static('Something went wrong logging the event: ' . $exception->getMessage());

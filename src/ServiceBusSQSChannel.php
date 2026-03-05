@@ -9,13 +9,15 @@ use Illuminate\Support\Facades\Log;
 
 class ServiceBusSQSChannel
 {
+    protected array $config;
+
     protected SqsClient $sqs;
 
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], SqsClient|null $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->sqs = new SqsClient([
+        $this->sqs = $sqs ?? new SqsClient([
             'region' => Arr::get($this->config, 'sqs.region'),
             'version' => 'latest',
             'credentials' => [
@@ -25,7 +27,7 @@ class ServiceBusSQSChannel
         ]);
     }
 
-    public function send($notifiable, Notification $notification)
+    public function send($notifiable, Notification $notification): void
     {
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
@@ -43,7 +45,7 @@ class ServiceBusSQSChannel
                         'tags' => [
                             'service-bus',
                         ],
-                    ]
+                    ],
                 );
             }
 
