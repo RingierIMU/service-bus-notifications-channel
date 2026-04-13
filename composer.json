@@ -16,8 +16,8 @@
     "ext-json": "*",
     "ext-pcre": "*",
     "ext-simplexml": "*",
-    "illuminate/notifications": "^9 || ^10 || ^11",
-    "illuminate/support": "^9 || ^10 || ^11",
+    "illuminate/notifications": "^9 || ^10 || ^11 || ^12",
+    "illuminate/support": "^9 || ^10 || ^11 || ^12",
     "guzzlehttp/guzzle": "^7",
     "guzzlehttp/promises": "^2",
     "guzzlehttp/psr7": "^1 || ^2"
