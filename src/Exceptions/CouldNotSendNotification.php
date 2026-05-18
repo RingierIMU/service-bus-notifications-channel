@@ -7,9 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
-/**
- * Class CouldNotSendNotification.
- */
 class CouldNotSendNotification extends Exception
 {
     public static function authFailed(Throwable $exception): static

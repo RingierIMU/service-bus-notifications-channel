@@ -93,7 +93,7 @@ class ServiceBusSQSChannel
         ];
 
         if ($this->isFifoQueue($queueUrl)) {
-            $payload['MessageGroupId'] = $params['from'];
+            $payload['MessageGroupId'] = $this->getMessageGroupId($params);
             // Explicit MessageDeduplicationId so dedup works regardless of
             // whether ContentBasedDeduplication is enabled on the queue.
             $payload['MessageDeduplicationId'] = md5($body);
@@ -144,6 +144,82 @@ class ServiceBusSQSChannel
         }
 
         throw $lastException;
+    }
+
+    protected function getMessageGroupId(array $message): string
+    {
+        $messageGroupId = $message['from'];
+
+        $append = match ($message['events'][0] ?? null) {
+            'ListingCreated',
+            'ListingUpdated',
+            'ListingDeleted',
+            'ListingLeadCreated',
+            'ListingPromoted',
+            'ListingProductsAdded',
+            'ListingProductsRemoved',
+            'ListingShared',
+            'ListingFavouriteCreated',
+            'ListingFavouriteRemoved' => 'listing=' . $message['payload']['listing']['reference'],
+
+            'TopicCreated',
+            'TopicUpdated',
+            'TopicDeleted' => 'topic=' . $message['payload']['topic']['reference'],
+
+            'AlertCreated',
+            'AlertUpdated',
+            'AlertDeleted',
+            'AlertSent' => 'user_alert=' . $message['payload']['alert']['user']['reference'],
+
+            'AdvertiserCreated',
+            'AdvertiserUpdated',
+            'AdvertiserDeleted',
+            'AdvertiserProductsAdded',
+            'AdvertiserProductsRemoved',
+            'AdvertiserLeadCreated' => 'advertiser=' . $message['payload']['advertiser']['reference'],
+
+            'UserCreated',
+            'UserUpdated',
+            'UserDeleted',
+            'UserLogin',
+            'UserLogout',
+            'UserPasswordRequest',
+            'UserPasswordReset',
+            'UserVerified',
+            'UserProductsAdded',
+            'UserProductsRemoved',
+            'UserLeadCreated',
+            'UserAnonymized' => 'user=' . $message['payload']['user']['reference'],
+
+            'SiteLeadCreated' => 'site_lead',
+
+            'Callback',
+            'Error' => 'callback',
+
+            'TestRunsDispatched',
+            'TestRunReceived',
+            'TestRunStarted',
+            'TestRunComplete' => 'test_run',
+
+            'ArticleCreated',
+            'ArticleUpdated',
+            'ArticleDeleted' => 'article=' . $message['payload']['article']['reference'],
+
+            'AuthorCreated',
+            'AuthorUpdated',
+            'AuthorDeleted' => 'author=' . $message['payload']['author']['reference'],
+
+            'SportEventCreated',
+            'SportEventUpdated',
+            'SportEventDeleted' => 'sport_event=' . $message['payload']['sport_event']['reference'],
+
+            'NewsletterSubscribed',
+            'NewsletterUnsubscribed' => 'newsletter',
+
+            default => null,
+        };
+
+        return $append ? $messageGroupId . '_' . $append : $messageGroupId;
     }
 
     protected function buildSqsClient(): SqsClient
