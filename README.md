@@ -2,22 +2,22 @@
 
 [![CI](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml/badge.svg)](https://github.com/RingierIMU/service-bus-notifications-channel/actions/workflows/main.yml)
 ![PHP Version](https://img.shields.io/badge/php-8.3%2B-777BB4?logo=php&logoColor=white)
-![Laravel Version](https://img.shields.io/badge/laravel-11%20%7C%2012-FF2D20?logo=laravel&logoColor=white)
+![Laravel Version](https://img.shields.io/badge/laravel-11%20%7C%2012%20%7C%2013-FF2D20?logo=laravel&logoColor=white)
 
 This is a Laravel package that provides notification channels for
 sending notifications to the _RingierSA Service Bus_.
 
 ## Supported Versions
 
-| PHP | Laravel 11.x | Laravel 12.x |
-|-----|:------------:|:------------:|
-| 8.3 | Yes | Yes |
-| 8.4 | Yes | Yes |
+| PHP | Laravel 11.x | Laravel 12.x | Laravel 13.x |
+|-----|:------------:|:------------:|:------------:|
+| 8.3 | Yes | Yes | Yes |
+| 8.4 | Yes | Yes | Yes |
 
 ## Requirements
 
 - PHP 8.3 or higher
-- Laravel 11.x or 12.x
+- Laravel 11.x, 12.x, or 13.x
 
 ## Installation
 
@@ -120,6 +120,8 @@ For high volume notifications, you can send directly to an `SQS` queue in the se
 
 This removes the need to queue it in your app, and provides a more reliable way to send high volume notifications.
 
+### Configuration
+
 Add the following to your config:
 
 ```php
@@ -164,6 +166,23 @@ class ArticleCreatedNotification extends Notification
 Now the notification will be sent directly to an `SQS` queue in the service bus, instead of via the API endpoint.
 
 We recommend you do not queue the notification. Send it `afterResponse`, the time to send the notification to `SQS` is minimal.
+
+### Queue type (FIFO vs standard)
+
+Both FIFO and standard SQS queues are supported. The channel detects the queue type from the URL:
+
+- URLs ending in `.fifo` are treated as FIFO queues. `MessageGroupId` is routed per primary entity for known event types (e.g. `{from}_listing={reference}`, `{from}_user={reference}`) so FIFO ordering is preserved per entity rather than globally serialised; unknown event types fall back to bare `{from}`. `MessageDeduplicationId` is set to the `md5` of the message body so dedup works whether or not `ContentBasedDeduplication` is enabled on the queue.
+- All other URLs are treated as standard queues — neither field is sent.
+
+### Credential refresh on transient AWS auth errors
+
+If the AWS SDK returns a stale-credential error (`ExpiredToken`, `ExpiredTokenException`, `InvalidClientTokenId`, `UnrecognizedClientException`, `RequestExpired`, `TokenRefreshRequired`), the channel rebuilds its SQS client from the current config and retries the send once. Non-credential errors are not retried and bubble up to the caller.
+
+If you cache Laravel config (`php artisan config:cache`), remember to clear it (`php artisan config:clear`) when rotating AWS credentials — the rebuild reads the same cached values otherwise.
+
+### debounce_key
+
+v2 event payloads include a `debounce_key` field derived from every payload entity's `reference` (e.g. `listing=abc_user=42`). It is emitted as message body data — downstream consumers can use it to dedupe at the application layer over the full reference combination, independent of SQS's content-based dedup. The field is `null` if any payload entity is missing a `reference`.
 
 ## Testing
 

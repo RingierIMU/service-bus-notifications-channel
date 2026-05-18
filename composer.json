@@ -1,7 +1,6 @@
 {
   "name": "ringierimu/service-bus-notifications-channel",
   "description": "Service Bus Notifications Channel",
-  "homepage": "https://github.com/RingierIMU/service-bus-notifications-channel",
   "license": "MIT",
   "authors": [
     {
@@ -11,30 +10,24 @@
       "role": "Developer"
     }
   ],
+  "homepage": "https://github.com/RingierIMU/service-bus-notifications-channel",
   "require": {
     "php": "^8.3",
     "ext-json": "*",
-    "illuminate/notifications": "^11.0 || ^12.0",
-    "illuminate/support": "^11.0 || ^12.0",
     "guzzlehttp/guzzle": "^7",
     "guzzlehttp/promises": "^2",
-    "guzzlehttp/psr7": "^1 || ^2",
+    "guzzlehttp/psr7": "^2",
+    "illuminate/notifications": "^11.0 || ^12.0 || ^13.0",
+    "illuminate/support": "^11.0 || ^12.0 || ^13.0",
     "ramsey/uuid": "^4.0"
   },
   "require-dev": {
     "aws/aws-sdk-php": "^3.0",
     "mockery/mockery": "^1.6",
-    "tightenco/tlint": "^8 || ^9",
-    "orchestra/testbench": "^9.0 || ^10.0",
-    "nunomaduro/collision": "^7.0 || ^8.0",
-    "pestphp/pest": "^4.0"
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Ringierimu\\ServiceBusNotificationsChannel\\ServiceBusServiceProvider"
-      ]
-    }
+    "nunomaduro/collision": "^8.0",
+    "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+    "pestphp/pest": "^4.0",
+    "tightenco/tlint": "^9"
   },
   "autoload": {
     "psr-4": {
@@ -46,13 +39,20 @@
       "Ringierimu\\ServiceBusNotificationsChannel\\Tests\\": "tests/"
     }
   },
-  "scripts": {
-    "lint": "vendor/bin/tlint",
-    "test": "vendor/bin/pest"
-  },
   "config": {
     "allow-plugins": {
       "pestphp/pest-plugin": true
     }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Ringierimu\\ServiceBusNotificationsChannel\\ServiceBusServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "vendor/bin/tlint",
+    "test": "vendor/bin/pest"
   }
 }

@@ -2,6 +2,8 @@
 
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
+use Aws\Exception\AwsException;
+use Aws\Result;
 use Aws\Sqs\SqsClient;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
@@ -9,22 +11,37 @@ use Illuminate\Support\Facades\Log;
 
 class ServiceBusSQSChannel
 {
+    /**
+     * AWS error codes that indicate the SQS client's credentials are stale and
+     * a single rebuild-and-retry is worth attempting before failing the send.
+     */
+    protected const CREDENTIAL_ERROR_CODES = [
+        'ExpiredToken',
+        'ExpiredTokenException',
+        'InvalidClientTokenId',
+        'UnrecognizedClientException',
+        'RequestExpired',
+        'TokenRefreshRequired',
+    ];
+
+    protected const MAX_SEND_ATTEMPTS = 2;
+
     protected array $config;
 
     protected SqsClient $sqs;
 
-    public function __construct(array $config = [], SqsClient|null $sqs = null)
+    /**
+     * Retained so refresh-on-credential-error is a no-op when a client was
+     * supplied by the caller (tests inject a mock and expect retry behavior
+     * to be verified against the same mock instance).
+     */
+    protected ?SqsClient $injectedSqs;
+
+    public function __construct(array $config = [], ?SqsClient $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
-
-        $this->sqs = $sqs ?? new SqsClient([
-            'region' => Arr::get($this->config, 'sqs.region'),
-            'version' => 'latest',
-            'credentials' => [
-                'key' => Arr::get($this->config, 'sqs.key'),
-                'secret' => Arr::get($this->config, 'sqs.secret'),
-            ],
-        ]);
+        $this->injectedSqs = $sqs;
+        $this->sqs = $sqs ?? $this->buildSqsClient();
     }
 
     public function send($notifiable, Notification $notification): void
@@ -42,9 +59,7 @@ class ServiceBusSQSChannel
                     [
                         'event' => $eventType,
                         'params' => $params,
-                        'tags' => [
-                            'service-bus',
-                        ],
+                        'tags' => ['service-bus'],
                     ],
                 );
             }
@@ -52,21 +67,179 @@ class ServiceBusSQSChannel
             return;
         }
 
-        $message = $notification
-            ->toServiceBus($notifiable)
-            ->getParams();
+        $payload = $this->buildSqsPayload($params);
 
-        $response = $this->sqs->sendMessage([
-            'QueueUrl' => Arr::get($this->config, 'sqs.queue_url'),
-            'MessageBody' => json_encode($message),
-            'MessageGroupId' => $message['from'],
+        $response = $this->sendWithCredentialRetry($payload, $eventType, $params);
+
+        if (!in_array($eventType, $dontReport)) {
+            Log::info(
+                "{$eventType} sent to bus queue",
+                [
+                    'message_id' => $response->get('MessageId'),
+                    'message' => $params,
+                ],
+            );
+        }
+    }
+
+    protected function buildSqsPayload(array $params): array
+    {
+        $queueUrl = Arr::get($this->config, 'sqs.queue_url');
+        $body = json_encode($params);
+
+        $payload = [
+            'QueueUrl' => $queueUrl,
+            'MessageBody' => $body,
+        ];
+
+        if ($this->isFifoQueue($queueUrl)) {
+            $payload['MessageGroupId'] = $this->getMessageGroupId($params);
+            // Explicit MessageDeduplicationId so dedup works regardless of
+            // whether ContentBasedDeduplication is enabled on the queue.
+            $payload['MessageDeduplicationId'] = md5($body);
+        }
+
+        return $payload;
+    }
+
+    protected function isFifoQueue(?string $queueUrl): bool
+    {
+        return is_string($queueUrl) && str_ends_with($queueUrl, '.fifo');
+    }
+
+    protected function sendWithCredentialRetry(array $payload, string $eventType, array $params): Result
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= self::MAX_SEND_ATTEMPTS; $attempt++) {
+            try {
+                return $this->sqs->sendMessage($payload);
+            } catch (AwsException $exception) {
+                $code = $exception->getAwsErrorCode();
+
+                if (!in_array($code, self::CREDENTIAL_ERROR_CODES, true)) {
+                    throw $exception;
+                }
+
+                $lastException = $exception;
+
+                if ($attempt >= self::MAX_SEND_ATTEMPTS) {
+                    break;
+                }
+
+                Log::warning(
+                    "$code received from SQS — refreshing client and retrying",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'attempt' => $attempt,
+                        'aws_error_code' => $code,
+                        'aws_error_message' => $exception->getAwsErrorMessage(),
+                        'tags' => ['service-bus'],
+                    ],
+                );
+
+                $this->refreshSqsClient();
+            }
+        }
+
+        throw $lastException;
+    }
+
+    protected function getMessageGroupId(array $message): string
+    {
+        $messageGroupId = $message['from'];
+
+        $append = match ($message['events'][0] ?? null) {
+            'ListingCreated',
+            'ListingUpdated',
+            'ListingDeleted',
+            'ListingLeadCreated',
+            'ListingPromoted',
+            'ListingProductsAdded',
+            'ListingProductsRemoved',
+            'ListingShared',
+            'ListingFavouriteCreated',
+            'ListingFavouriteRemoved' => 'listing=' . $message['payload']['listing']['reference'],
+
+            'TopicCreated',
+            'TopicUpdated',
+            'TopicDeleted' => 'topic=' . $message['payload']['topic']['reference'],
+
+            'AlertCreated',
+            'AlertUpdated',
+            'AlertDeleted',
+            'AlertSent' => 'user_alert=' . $message['payload']['alert']['user']['reference'],
+
+            'AdvertiserCreated',
+            'AdvertiserUpdated',
+            'AdvertiserDeleted',
+            'AdvertiserProductsAdded',
+            'AdvertiserProductsRemoved',
+            'AdvertiserLeadCreated' => 'advertiser=' . $message['payload']['advertiser']['reference'],
+
+            'UserCreated',
+            'UserUpdated',
+            'UserDeleted',
+            'UserLogin',
+            'UserLogout',
+            'UserPasswordRequest',
+            'UserPasswordReset',
+            'UserVerified',
+            'UserProductsAdded',
+            'UserProductsRemoved',
+            'UserLeadCreated',
+            'UserAnonymized' => 'user=' . $message['payload']['user']['reference'],
+
+            'SiteLeadCreated' => 'site_lead',
+
+            'Callback',
+            'Error' => 'callback',
+
+            'TestRunsDispatched',
+            'TestRunReceived',
+            'TestRunStarted',
+            'TestRunComplete' => 'test_run',
+
+            'ArticleCreated',
+            'ArticleUpdated',
+            'ArticleDeleted' => 'article=' . $message['payload']['article']['reference'],
+
+            'AuthorCreated',
+            'AuthorUpdated',
+            'AuthorDeleted' => 'author=' . $message['payload']['author']['reference'],
+
+            'SportEventCreated',
+            'SportEventUpdated',
+            'SportEventDeleted' => 'sport_event=' . $message['payload']['sport_event']['reference'],
+
+            'NewsletterSubscribed',
+            'NewsletterUnsubscribed' => 'newsletter',
+
+            default => null,
+        };
+
+        return $append ? $messageGroupId . '_' . $append : $messageGroupId;
+    }
+
+    protected function buildSqsClient(): SqsClient
+    {
+        return new SqsClient([
+            'region' => Arr::get($this->config, 'sqs.region'),
+            'version' => 'latest',
+            'credentials' => [
+                'key' => Arr::get($this->config, 'sqs.key'),
+                'secret' => Arr::get($this->config, 'sqs.secret'),
+            ],
         ]);
+    }
 
-        $event = $message['events'][0];
+    protected function refreshSqsClient(): void
+    {
+        if ($this->injectedSqs !== null) {
+            return;
+        }
 
-        Log::info("{$event} sent to bus queue", [
-            'message_id' => $response->get('MessageId'),
-            'message' => $message,
-        ]);
+        $this->sqs = $this->buildSqsClient();
     }
 }
