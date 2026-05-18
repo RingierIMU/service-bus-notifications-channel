@@ -17,23 +17,20 @@ use Throwable;
  */
 class ServiceBusChannel
 {
-    /**
-     * @var Client
-     */
-    private $client;
-    protected $hasAttemptedLogin = false;
-    protected $config = [];
+    private readonly Client $client;
+
+    protected bool $hasAttemptedLogin = false;
+
+    protected array $config = [];
 
     /**
      * ServiceBusChannel constructor.
-     *
-     * @param array $config
      */
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], Client|null $client = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->client = new Client([
+        $this->client = $client ?? new Client([
             'base_uri' => Arr::get($this->config, 'endpoint'),
         ]);
     }
@@ -41,14 +38,12 @@ class ServiceBusChannel
     /**
      * Send the given notification.
      *
-     * @param mixed        $notifiable
-     * @param Notification $notification
      *
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      * @throws Throwable
      */
-    public function send($notifiable, Notification $notification)
+    public function send($notifiable, Notification $notification): void
     {
         /** @var ServiceBusEvent $event */
         $event = $notification->toServiceBus($notifiable);
@@ -83,7 +78,7 @@ class ServiceBusChannel
                 [
                     'headers' => $headers,
                     'json' => [$params],
-                ]
+                ],
             );
 
             Log::info("$eventType service bus notification", [
@@ -123,14 +118,12 @@ class ServiceBusChannel
     /**
      * @throws CouldNotSendNotification
      * @throws GuzzleException
-     *
-     * @return string
      */
     private function getToken(): string
     {
         return Cache::rememberForever($this->generateTokenKey(), function () {
             try {
-                $version = intval($this->config['version']);
+                $version = (int) ($this->config['version']);
 
                 if ($version < 2) {
                     $response = $this->client->request(
@@ -142,7 +135,7 @@ class ServiceBusChannel
                                 'password',
                                 'venture_config_id',
                             ]),
-                        ]
+                        ],
                     );
                 } else {
                     $response = $this->client->request(
@@ -154,7 +147,7 @@ class ServiceBusChannel
                                 'password',
                                 'node_id',
                             ]),
-                        ]
+                        ],
                     );
                 }
 
@@ -163,39 +156,32 @@ class ServiceBusChannel
                 $code = (int) Arr::get(
                     $body,
                     'code',
-                    $response->getStatusCode()
+                    $response->getStatusCode(),
                 );
 
-                switch ($code) {
-                    case 200:
-                        return $body['token'];
-                    default:
-                        throw CouldNotSendNotification::loginFailed($response);
-                }
+                return match ($code) {
+                    200 => $body['token'],
+                    default => throw CouldNotSendNotification::loginFailed($response),
+                };
             } catch (RequestException $exception) {
                 throw CouldNotSendNotification::requestFailed($exception);
             }
         });
     }
 
-    /**
-     * @param string $endpoint
-     *
-     * @return string
-     */
     private function getUrl(string $endpoint): string
     {
         return $endpoint;
     }
 
-    public function generateTokenKey()
+    public function generateTokenKey(): string
     {
-        $version = intval($this->config['version']);
+        $version = (int) ($this->config['version']);
 
         if ($version < 2) {
             return md5(
-                'service-bus-token' .
-                    Arr::get($this->config, 'venture_config_id')
+                'service-bus-token'
+                    . Arr::get($this->config, 'venture_config_id'),
             );
         }
 

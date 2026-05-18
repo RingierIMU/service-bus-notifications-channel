@@ -10,13 +10,13 @@ use Illuminate\Support\Facades\Log;
 
 class ServiceBusSQSChannel
 {
-    protected SqsClient $sqs;
-
     protected array $config;
+
+    protected SqsClient $sqs;
 
     protected bool $hasAttemptedRefresh = false;
 
-    public function __construct(array $config = [])
+    public function __construct(array $config = [], SqsClient|null $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
         $this->initializeSqsClient();
@@ -24,8 +24,8 @@ class ServiceBusSQSChannel
 
     protected function initializeSqsClient(): void
     {
-        $this->sqs = new SqsClient([
-            'region' => Arr::get($this->config, 'sqs.region', 'eu-west-1'),
+        $this->sqs = $sqs ?? new SqsClient([
+            'region' => Arr::get($this->config, 'sqs.region'),
             'version' => 'latest',
             'credentials' => [
                 'key' => Arr::get($this->config, 'sqs.key'),
@@ -52,7 +52,7 @@ class ServiceBusSQSChannel
                         'tags' => [
                             'service-bus',
                         ],
-                    ]
+                    ],
                 );
             }
 
