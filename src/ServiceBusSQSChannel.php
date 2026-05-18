@@ -160,23 +160,23 @@ class ServiceBusSQSChannel
             'ListingProductsRemoved',
             'ListingShared',
             'ListingFavouriteCreated',
-            'ListingFavouriteRemoved' => 'listing=' . $message['payload']['listing']['reference'],
+            'ListingFavouriteRemoved' => 'listing=' . $message['payload']['listing']['reference'] ?? null,
 
             'TopicCreated',
             'TopicUpdated',
-            'TopicDeleted' => 'topic=' . $message['payload']['topic']['reference'],
+            'TopicDeleted' => 'topic=' . $message['payload']['topic']['reference'] ?? null,
 
             'AlertCreated',
             'AlertUpdated',
             'AlertDeleted',
-            'AlertSent' => 'user_alert=' . $message['payload']['alert']['user']['reference'],
+            'AlertSent' => 'user_alert=' . $message['payload']['alert']['user']['reference'] ?? null,
 
             'AdvertiserCreated',
             'AdvertiserUpdated',
             'AdvertiserDeleted',
             'AdvertiserProductsAdded',
             'AdvertiserProductsRemoved',
-            'AdvertiserLeadCreated' => 'advertiser=' . $message['payload']['advertiser']['reference'],
+            'AdvertiserLeadCreated' => 'advertiser=' . $message['payload']['advertiser']['reference'] ?? null,
 
             'UserCreated',
             'UserUpdated',
@@ -189,7 +189,7 @@ class ServiceBusSQSChannel
             'UserProductsAdded',
             'UserProductsRemoved',
             'UserLeadCreated',
-            'UserAnonymized' => 'user=' . $message['payload']['user']['reference'],
+            'UserAnonymized' => 'user=' . $message['payload']['user']['reference'] ?? null,
 
             'SiteLeadCreated' => 'site_lead',
 
@@ -203,15 +203,15 @@ class ServiceBusSQSChannel
 
             'ArticleCreated',
             'ArticleUpdated',
-            'ArticleDeleted' => 'article=' . $message['payload']['article']['reference'],
+            'ArticleDeleted' => 'article=' . $message['payload']['article']['reference'] ?? null,
 
             'AuthorCreated',
             'AuthorUpdated',
-            'AuthorDeleted' => 'author=' . $message['payload']['author']['reference'],
+            'AuthorDeleted' => 'author=' . $message['payload']['author']['reference'] ?? null,
 
             'SportEventCreated',
             'SportEventUpdated',
-            'SportEventDeleted' => 'sport_event=' . $message['payload']['sport_event']['reference'],
+            'SportEventDeleted' => 'sport_event=' . $message['payload']['sport_event']['reference'] ?? null,
 
             'NewsletterSubscribed',
             'NewsletterUnsubscribed' => 'newsletter',
