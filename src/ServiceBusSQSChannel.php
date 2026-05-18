@@ -3,6 +3,7 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Aws\Exception\AwsException;
+use Aws\Result;
 use Aws\Sqs\SqsClient;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Arr;
@@ -10,28 +11,37 @@ use Illuminate\Support\Facades\Log;
 
 class ServiceBusSQSChannel
 {
+    /**
+     * AWS error codes that indicate the SQS client's credentials are stale and
+     * a single rebuild-and-retry is worth attempting before failing the send.
+     */
+    protected const CREDENTIAL_ERROR_CODES = [
+        'ExpiredToken',
+        'ExpiredTokenException',
+        'InvalidClientTokenId',
+        'UnrecognizedClientException',
+        'RequestExpired',
+        'TokenRefreshRequired',
+    ];
+
+    protected const MAX_SEND_ATTEMPTS = 2;
+
     protected array $config;
 
     protected SqsClient $sqs;
 
-    protected bool $hasAttemptedRefresh = false;
+    /**
+     * Retained so refresh-on-credential-error is a no-op when a client was
+     * supplied by the caller (tests inject a mock and expect retry behavior
+     * to be verified against the same mock instance).
+     */
+    protected ?SqsClient $injectedSqs;
 
-    public function __construct(array $config = [], SqsClient|null $sqs = null)
+    public function __construct(array $config = [], ?SqsClient $sqs = null)
     {
         $this->config = $config ?: config('services.service_bus');
-        $this->initializeSqsClient();
-    }
-
-    protected function initializeSqsClient(): void
-    {
-        $this->sqs = $sqs ?? new SqsClient([
-            'region' => Arr::get($this->config, 'sqs.region'),
-            'version' => 'latest',
-            'credentials' => [
-                'key' => Arr::get($this->config, 'sqs.key'),
-                'secret' => Arr::get($this->config, 'sqs.secret'),
-            ],
-        ]);
+        $this->injectedSqs = $sqs;
+        $this->sqs = $sqs ?? $this->buildSqsClient();
     }
 
     public function send($notifiable, Notification $notification): void
@@ -49,9 +59,7 @@ class ServiceBusSQSChannel
                     [
                         'event' => $eventType,
                         'params' => $params,
-                        'tags' => [
-                            'service-bus',
-                        ],
+                        'tags' => ['service-bus'],
                     ],
                 );
             }
@@ -59,68 +67,103 @@ class ServiceBusSQSChannel
             return;
         }
 
-        if (!isset($params['from'], $params['events'][0])) {
-            Log::error('Invalid message structure', ['params' => $params]);
+        $payload = $this->buildSqsPayload($params);
+
+        $response = $this->sendWithCredentialRetry($payload, $eventType, $params);
+
+        if (!in_array($eventType, $dontReport)) {
+            Log::info(
+                "{$eventType} sent to bus queue",
+                [
+                    'message_id' => $response->get('MessageId'),
+                    'message' => $params,
+                ],
+            );
+        }
+    }
+
+    protected function buildSqsPayload(array $params): array
+    {
+        $queueUrl = Arr::get($this->config, 'sqs.queue_url');
+        $body = json_encode($params);
+
+        $payload = [
+            'QueueUrl' => $queueUrl,
+            'MessageBody' => $body,
+        ];
+
+        if ($this->isFifoQueue($queueUrl)) {
+            $payload['MessageGroupId'] = $params['from'];
+            // Explicit MessageDeduplicationId so dedup works regardless of
+            // whether ContentBasedDeduplication is enabled on the queue.
+            $payload['MessageDeduplicationId'] = md5($body);
+        }
+
+        return $payload;
+    }
+
+    protected function isFifoQueue(?string $queueUrl): bool
+    {
+        return is_string($queueUrl) && str_ends_with($queueUrl, '.fifo');
+    }
+
+    protected function sendWithCredentialRetry(array $payload, string $eventType, array $params): Result
+    {
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= self::MAX_SEND_ATTEMPTS; $attempt++) {
+            try {
+                return $this->sqs->sendMessage($payload);
+            } catch (AwsException $exception) {
+                $code = $exception->getAwsErrorCode();
+
+                if (!in_array($code, self::CREDENTIAL_ERROR_CODES, true)) {
+                    throw $exception;
+                }
+
+                $lastException = $exception;
+
+                if ($attempt >= self::MAX_SEND_ATTEMPTS) {
+                    break;
+                }
+
+                Log::warning(
+                    "$code received from SQS — refreshing client and retrying",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'attempt' => $attempt,
+                        'aws_error_code' => $code,
+                        'aws_error_message' => $exception->getAwsErrorMessage(),
+                        'tags' => ['service-bus'],
+                    ],
+                );
+
+                $this->refreshSqsClient();
+            }
+        }
+
+        throw $lastException;
+    }
+
+    protected function buildSqsClient(): SqsClient
+    {
+        return new SqsClient([
+            'region' => Arr::get($this->config, 'sqs.region'),
+            'version' => 'latest',
+            'credentials' => [
+                'key' => Arr::get($this->config, 'sqs.key'),
+                'secret' => Arr::get($this->config, 'sqs.secret'),
+            ],
+        ]);
+    }
+
+    protected function refreshSqsClient(): void
+    {
+        if ($this->injectedSqs !== null) {
             return;
         }
 
-        $queueUrl = Arr::get($this->config, 'sqs.queue_url');
-        $isFifoQueue = strpos($queueUrl, '.fifo') !== false;
-
-        $payloadSqs = [
-            'QueueUrl' => $queueUrl,
-            'MessageBody' => json_encode($params),
-        ];
-
-        if ($isFifoQueue) {
-            $payloadSqs['MessageGroupId'] = $params['from'];
-            $payloadSqs['MessageDeduplicationId'] = md5(json_encode($params));
-        }
-
-        $this->sendMessageToSqs($payloadSqs, $eventType, $params, $dontReport);
-    }
-
-    protected function sendMessageToSqs(array $payloadSqs, string $eventType, array $params, array $dontReport): void
-    {
-        try {
-            $response = $this->sqs->sendMessage($payloadSqs);
-
-            $eventName = $params['events'][0];
-
-            if (!in_array($eventType, $dontReport)) {
-                Log::info("{$eventName} sent to bus queue", [
-                    'message_id' => $response->get('MessageId'),
-                    'params' => $params,
-                ]);
-            }
-
-            $this->hasAttemptedRefresh = false;
-        } catch (AwsException $exception) {
-            $code = $exception->getAwsErrorCode();
-
-            if (in_array($code, ['ExpiredToken', 'UnrecognizedClientException', 'InvalidClientTokenId'])) {
-                Log::info("$code received. Refreshing credentials and retrying.", [
-                    'event' => $eventType,
-                    'params' => $params,
-                    'aws_error_code' => $code,
-                    'aws_error_message' => $exception->getAwsErrorMessage(),
-                    'tags' => ['service-bus'],
-                ]);
-
-                if (!$this->hasAttemptedRefresh) {
-                    $this->hasAttemptedRefresh = true;
-
-                    $this->initializeSqsClient();
-
-                    $this->sendMessageToSqs($payloadSqs, $eventType, $params, $dontReport);
-                } else {
-                    $this->hasAttemptedRefresh = false;
-
-                    throw new \Exception('Authentication failed after retrying.', 0, $exception);
-                }
-            } else {
-                throw $exception;
-            }
-        }
+        $this->sqs = $this->buildSqsClient();
     }
 }
