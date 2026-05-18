@@ -12,11 +12,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Migrated test suite from PHPUnit to Pest 4
 - Applied PHP 8.3 modernization via Rector (readonly properties, match expressions, named arguments)
 - Refactored `ServiceBusChannel` and `ServiceBusSQSChannel` to accept optional HTTP/SQS clients via constructor injection
+- `ServiceBusSQSChannel` now auto-detects FIFO queues by `.fifo` URL suffix and only sets `MessageGroupId`/`MessageDeduplicationId` for FIFO queues; standard queues are now supported
 
 ### Added
 - Full test coverage for `ServiceBusChannel` and `ServiceBusSQSChannel`
 - GitHub Actions CI workflow replacing legacy `build.yml`
 - README badges for CI status, PHP version, and Laravel version
+- `ServiceBusSQSChannel` rebuilds its SQS client and retries once when AWS returns a stale-credential error (`ExpiredToken`, `ExpiredTokenException`, `InvalidClientTokenId`, `UnrecognizedClientException`, `RequestExpired`, `TokenRefreshRequired`); non-credential errors are not retried and bubble up. Note: if Laravel's config is cached (`php artisan config:cache`), the rebuild reads the same cached credentials — clear the config cache when rotating keys.
 
 ### Removed
 - Support for PHP < 8.3

@@ -165,6 +165,19 @@ Now the notification will be sent directly to an `SQS` queue in the service bus,
 
 We recommend you do not queue the notification. Send it `afterResponse`, the time to send the notification to `SQS` is minimal.
 
+### Queue type (FIFO vs standard)
+
+Both FIFO and standard SQS queues are supported. The channel detects the queue type from the URL:
+
+- URLs ending in `.fifo` are treated as FIFO queues. `MessageGroupId` is set to the configured `from`/`node_id`, and `MessageDeduplicationId` is set to the `md5` of the message body so dedup works whether or not `ContentBasedDeduplication` is enabled on the queue.
+- All other URLs are treated as standard queues — neither field is sent.
+
+### Credential refresh on transient AWS auth errors
+
+If the AWS SDK returns a stale-credential error (`ExpiredToken`, `ExpiredTokenException`, `InvalidClientTokenId`, `UnrecognizedClientException`, `RequestExpired`, `TokenRefreshRequired`), the channel rebuilds its SQS client from the current config and retries the send once. Non-credential errors are not retried and bubble up to the caller.
+
+If you cache Laravel config (`php artisan config:cache`), remember to clear it (`php artisan config:clear`) when rotating AWS credentials — the rebuild reads the same cached values otherwise.
+
 ## Testing
 
 ```bash
