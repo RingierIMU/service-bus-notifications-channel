@@ -6,25 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
-- **BREAKING:** Minimum PHP version raised to 8.3
-- **BREAKING:** Minimum Laravel version raised to 11.0 (supports 11.x and 12.x)
-- Migrated test suite from PHPUnit to Pest 4
-- Applied PHP 8.3 modernization via Rector (readonly properties, match expressions, named arguments)
-- Refactored `ServiceBusChannel` and `ServiceBusSQSChannel` to accept optional HTTP/SQS clients via constructor injection
-- `ServiceBusSQSChannel` now auto-detects FIFO queues by `.fifo` URL suffix and only sets `MessageGroupId`/`MessageDeduplicationId` for FIFO queues; standard queues are now supported
-
 ### Added
+- Laravel 13 support (released 2026-03-17 — zero breaking changes from 12.x)
+- `debounce_key` field on v2 event params: joins every payload entity's `reference` into `key1=ref1_key2=ref2_...` for downstream message deduplication on the full reference combination. Returns `null` if any entity is missing a reference.
+- Per-event-type `MessageGroupId` for `ServiceBusSQSChannel`: appends a primary-entity tag (e.g. `listing={reference}`, `user={reference}`) so SQS FIFO ordering partitions by the entity that owns the event. Unknown event types fall back to bare `from`.
 - Full test coverage for `ServiceBusChannel` and `ServiceBusSQSChannel`
 - GitHub Actions CI workflow replacing legacy `build.yml`
 - README badges for CI status, PHP version, and Laravel version
 - `ServiceBusSQSChannel` rebuilds its SQS client and retries once when AWS returns a stale-credential error (`ExpiredToken`, `ExpiredTokenException`, `InvalidClientTokenId`, `UnrecognizedClientException`, `RequestExpired`, `TokenRefreshRequired`); non-credential errors are not retried and bubble up. Note: if Laravel's config is cached (`php artisan config:cache`), the rebuild reads the same cached credentials — clear the config cache when rotating keys.
+
+### Changed
+- **BREAKING:** Minimum PHP version raised to 8.3
+- **BREAKING:** Minimum Laravel version raised to 11.0 (supports 11.x, 12.x, and 13.x)
+- Migrated test suite from PHPUnit to Pest 4
+- Applied PHP 8.3 modernization via Rector (readonly properties, match expressions, named arguments)
+- Refactored `ServiceBusChannel` and `ServiceBusSQSChannel` to accept optional HTTP/SQS clients via constructor injection
+- `ServiceBusSQSChannel` now auto-detects FIFO queues by `.fifo` URL suffix and only sets `MessageGroupId`/`MessageDeduplicationId` for FIFO queues; standard queues are now supported
+- `ServiceBusSQSChannel::send()` no longer double-resolves the event (`toServiceBus()` was being called twice).
+- `ServiceBusEvent::getPayload()` is now null-safe (returns `[]` when no payload was set), so v2 events built without `withPayload()` no longer throw on `getParams()`.
+- Bumped GitHub Actions: `actions/checkout@v4` → `@v6`, `actions/cache@v4` → `@v5`.
 
 ### Removed
 - Support for PHP < 8.3
 - Support for Laravel < 11.0
 - Legacy `build.yml` GitHub Actions workflow
 - `helpers.php` test helper file (inlined into test files)
+- Legacy constraints on dev/optional deps: `nunomaduro/collision ^7.0`, `tightenco/tlint ^8`, `guzzlehttp/psr7 ^1` — all narrowed to the latest major.
 
 ## [3.10.0] - 2025-02-26
 

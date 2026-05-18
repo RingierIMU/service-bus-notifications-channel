@@ -12,33 +12,26 @@ use Illuminate\Support\Facades\Log;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\CouldNotSendNotification;
 use Throwable;
 
-/**
- * Class ServiceBusChannel.
- */
 class ServiceBusChannel
 {
-    private readonly Client $client;
-
     protected bool $hasAttemptedLogin = false;
 
     protected array $config = [];
 
-    /**
-     * ServiceBusChannel constructor.
-     */
+    private readonly Client $client;
+
     public function __construct(array $config = [], Client|null $client = null)
     {
         $this->config = $config ?: config('services.service_bus');
 
-        $this->client = $client ?? new Client([
-            'base_uri' => Arr::get($this->config, 'endpoint'),
-        ]);
+        $this->client = $client ?? new Client(
+            [
+                'base_uri' => Arr::get($this->config, 'endpoint'),
+            ],
+        );
     }
 
     /**
-     * Send the given notification.
-     *
-     *
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      * @throws Throwable
@@ -53,11 +46,14 @@ class ServiceBusChannel
 
         if (Arr::get($this->config, 'enabled') == false) {
             if (!in_array($eventType, $dontReport)) {
-                Log::debug("$eventType service bus notification [disabled]", [
-                    'event' => $eventType,
-                    'params' => $params,
-                    'tags' => ['service-bus'],
-                ]);
+                Log::debug(
+                    "$eventType service bus notification [disabled]",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'tags' => ['service-bus'],
+                    ],
+                );
             }
 
             return;
@@ -74,34 +70,38 @@ class ServiceBusChannel
         try {
             $response = $this->client->request(
                 'POST',
-                $this->getUrl('events'),
+                'events',
                 [
                     'headers' => $headers,
                     'json' => [$params],
                 ],
             );
 
-            Log::info("$eventType service bus notification", [
-                'event' => $eventType,
-                'params' => $params,
-                'tags' => ['service-bus'],
-                'status' => $response->getStatusCode(),
-            ]);
+            Log::info(
+                "$eventType service bus notification",
+                [
+                    'event' => $eventType,
+                    'params' => $params,
+                    'tags' => ['service-bus'],
+                    'status' => $response->getStatusCode(),
+                ],
+            );
         } catch (RequestException $exception) {
             $code = $exception->getCode();
 
             if (in_array($code, [401, 403])) {
-                Log::info("$code received. Logging in and retrying.", [
-                    'event' => $eventType,
-                    'params' => $params,
-                    'tags' => ['service-bus'],
-                ]);
+                Log::info(
+                    "$code received. Logging in and retrying.",
+                    [
+                        'event' => $eventType,
+                        'params' => $params,
+                        'tags' => ['service-bus'],
+                    ],
+                );
 
-                // clear the invalid token //
                 Cache::forget($this->generateTokenKey());
 
                 if (!$this->hasAttemptedLogin) {
-                    // redo the call which will now redo the login //
                     $this->hasAttemptedLogin = true;
                     $this->send($notifiable, $notification);
                 } else {
@@ -119,72 +119,53 @@ class ServiceBusChannel
      * @throws CouldNotSendNotification
      * @throws GuzzleException
      */
-    private function getToken(): string
+    protected function getToken(): string
     {
-        return Cache::rememberForever($this->generateTokenKey(), function () {
-            try {
-                $version = (int) ($this->config['version']);
+        return Cache::rememberForever(
+            $this->generateTokenKey(),
+            function () {
+                try {
+                    $response = $this->client->request(
+                        'POST',
+                        'login',
+                        [
+                            'json' => Arr::only(
+                                $this->config,
+                                [
+                                    'username',
+                                    'password',
+                                    $this->tenantConfigKey(),
+                                ],
+                            ),
+                        ],
+                    );
 
-                if ($version < 2) {
-                    $response = $this->client->request(
-                        'POST',
-                        $this->getUrl('login'),
-                        [
-                            'json' => Arr::only($this->config, [
-                                'username',
-                                'password',
-                                'venture_config_id',
-                            ]),
-                        ],
+                    $body = json_decode((string) $response->getBody(), true);
+
+                    $code = (int) Arr::get(
+                        $body,
+                        'code',
+                        $response->getStatusCode(),
                     );
-                } else {
-                    $response = $this->client->request(
-                        'POST',
-                        $this->getUrl('login'),
-                        [
-                            'json' => Arr::only($this->config, [
-                                'username',
-                                'password',
-                                'node_id',
-                            ]),
-                        ],
-                    );
+
+                    return match ($code) {
+                        200 => $body['token'],
+                        default => throw CouldNotSendNotification::loginFailed($response),
+                    };
+                } catch (RequestException $exception) {
+                    throw CouldNotSendNotification::requestFailed($exception);
                 }
-
-                $body = json_decode((string) $response->getBody(), true);
-
-                $code = (int) Arr::get(
-                    $body,
-                    'code',
-                    $response->getStatusCode(),
-                );
-
-                return match ($code) {
-                    200 => $body['token'],
-                    default => throw CouldNotSendNotification::loginFailed($response),
-                };
-            } catch (RequestException $exception) {
-                throw CouldNotSendNotification::requestFailed($exception);
-            }
-        });
+            },
+        );
     }
 
-    private function getUrl(string $endpoint): string
+    protected function generateTokenKey(): string
     {
-        return $endpoint;
+        return md5('service-bus-token' . Arr::get($this->config, $this->tenantConfigKey()));
     }
 
-    public function generateTokenKey(): string
+    protected function tenantConfigKey(): string
     {
-        $version = (int) ($this->config['version']);
-
-        if ($version < 2) {
-            return md5(
-                'service-bus-token'
-                    . Arr::get($this->config, 'venture_config_id'),
-            );
-        }
-
-        return md5('service-bus-token' . Arr::get($this->config, 'node_id'));
+        return ((int) $this->config['version']) < 2 ? 'venture_config_id' : 'node_id';
     }
 }

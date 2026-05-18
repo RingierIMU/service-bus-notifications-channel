@@ -3,25 +3,12 @@
 namespace Ringierimu\ServiceBusNotificationsChannel;
 
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Ramsey\Uuid\Uuid;
 use Ringierimu\ServiceBusNotificationsChannel\Exceptions\InvalidConfigException;
 use Throwable;
 
-/**
- * Class ServiceBusEvent.
- *
- * @property string eventType
- * @property string reference
- * @property string culture
- * @property string actionType
- * @property string actionReference
- * @property Carbon createdAt
- * @property array payload
- * @property string route
- */
 class ServiceBusEvent
 {
     public static $actionTypes = [
@@ -50,14 +37,21 @@ class ServiceBusEvent
 
     protected $config = [];
 
-    /**
-     * ServiceBusEvent constructor.
-     */
     public function __construct(protected string $eventType, array $config = [])
     {
         $this->config = $config ?: config('services.service_bus');
         $this->createdAt = Carbon::now();
         $this->reference = $this->generateUUID();
+    }
+
+    /**
+     * Generates a v4 UUID.
+     *
+     * @throws Throwable
+     */
+    protected function generateUUID(): string
+    {
+        return Uuid::uuid4()->toString();
     }
 
     /**
@@ -108,12 +102,14 @@ class ServiceBusEvent
      */
     public function withAction(string $type, string $reference): static
     {
-        if (in_array($type, self::$actionTypes)) {
-            $this->actionType = $type;
-            $this->actionReference = $reference;
-        } else {
-            throw new InvalidConfigException('Action type must be on of the following: ' . print_r(self::$actionTypes, true));
+        if (!in_array($type, self::$actionTypes)) {
+            throw new InvalidConfigException(
+                'Action type must be one of the following: ' . implode(', ', self::$actionTypes),
+            );
         }
+
+        $this->actionType = $type;
+        $this->actionReference = $reference;
 
         return $this;
     }
@@ -131,13 +127,7 @@ class ServiceBusEvent
     }
 
     /**
-     * The entity that the event applies to, where relevant, eg, the user that logged in.
-     *
-     * This needs to a Illuminate\Http\Resources\Json\JsonResource\JsonResource representing the entity
-     *
      * @deprecated Use withResource and withPayload instead.
-     *
-     * @return $this
      */
     public function withResources(string $resourceName, array $resource): static
     {
@@ -146,29 +136,6 @@ class ServiceBusEvent
         return $this;
     }
 
-    /**
-     * @param array|JsonResource $resource
-     *
-     * @return this
-     */
-    public function withResource(string $resourceName, $resource, Request $request = null): static
-    {
-        if (!is_array($resource)) {
-            if ($resource instanceof JsonResource) {
-                $resource = $resource->toArray($request);
-            } else {
-                throw new Exception('Unhandled resource type: ' . $resourceName . ' ' . json_encode($resource));
-            }
-        }
-
-        $this->payload[$resourceName] = $resource;
-
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
     public function withPayload(array $payload): static
     {
         $this->payload = [];
@@ -181,6 +148,28 @@ class ServiceBusEvent
     }
 
     /**
+     * @param array|JsonResource $resource
+     *
+     * @throws InvalidConfigException
+     */
+    public function withResource(string $resourceName, $resource, Request|null $request = null): static
+    {
+        if (!is_array($resource)) {
+            if (!$resource instanceof JsonResource) {
+                throw new InvalidConfigException(
+                    'Unhandled resource type: ' . $resourceName . ' ' . json_encode($resource),
+                );
+            }
+
+            $resource = $resource->toArray($request);
+        }
+
+        $this->payload[$resourceName] = $resource;
+
+        return $this;
+    }
+
+    /**
      * Date time of the event creation on the event source in ISO8601/RFC3339 format.
      */
     public function createdAt(Carbon $createdAtDate): static
@@ -188,32 +177,6 @@ class ServiceBusEvent
         $this->createdAt = $createdAtDate;
 
         return $this;
-    }
-
-    /**
-     * Returns the culture to be use, will use config services.service_bus.culture if not set on the event.
-     */
-    protected function getCulture(): string
-    {
-        return $this->culture ?? $this->config['culture'];
-    }
-
-    /**
-     * Gets the extra data to be sent as the payload param.
-     */
-    protected function getPayload(): array
-    {
-        return $this->payload;
-    }
-
-    /**
-     * Generates a v4 UUID.
-     *
-     * @throws Throwable
-     */
-    private function generateUUID(): string
-    {
-        return Uuid::uuid4()->toString();
     }
 
     /**
@@ -246,11 +209,50 @@ class ServiceBusEvent
             'events' => [$this->eventType],
             'reference' => $this->reference,
             'from' => $this->config['from'] ?? $this->config['node_id'],
+            'debounce_key' => $this->getDebounceKey(),
             'created_at' => $this->createdAt->toISOString(),
             'version' => $this->config['version'],
             'route' => $this->route,
             'payload' => $this->getPayload(),
         ];
+    }
+
+    /**
+     * Returns the culture to be use, will use config services.service_bus.culture if not set on the event.
+     */
+    protected function getCulture(): string
+    {
+        return $this->culture ?? $this->config['culture'];
+    }
+
+    /**
+     * Gets the extra data to be sent as the payload param.
+     */
+    protected function getPayload(): array
+    {
+        return $this->payload ?? [];
+    }
+
+    protected function getDebounceKey(): string|null
+    {
+        $debounceKV = collect($this->getPayload())
+            ->mapWithKeys(
+                fn ($value, $key) => [$key => $value['reference'] ?? null],
+            );
+
+        $debounceKVCount = $debounceKV->count();
+        if (!$debounceKVCount) {
+            return null;
+        }
+
+        $debounceKeys = $debounceKV->filter();
+        if ($debounceKeys->count() !== $debounceKVCount) {
+            return null;
+        }
+
+        return $debounceKeys
+            ->map(fn ($value, $key) => "{$key}={$value}")
+            ->implode('_');
     }
 
     public function getEventType(): string
