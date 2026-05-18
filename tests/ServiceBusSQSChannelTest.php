@@ -388,6 +388,51 @@ it(
     },
 );
 
+// Regression: production bug — getMessageGroupId() raised "Undefined array key"
+// (ErrorException 500) when a payload-keyed event arrived without the corresponding
+// nested key on a .fifo queue. PHP `.` binds tighter than `??`, so
+// `'user=' . $message['payload']['user']['reference'] ?? null` evaluated the array
+// access first and triggered the warning before the null-coalesce could fire.
+// Pinned semantic: missing nested reference → arm = null → bare `from` (matches the
+// `default => null` arm and the pre-PR-#46 behaviour for unknown event types).
+it(
+    'returns bare from when payload-keyed event is missing its entity reference (regression: undefined array key on FIFO)',
+    function (string $eventType, array $payload) {
+        Log::spy();
+        $captured = null;
+        $sqsMock = mockSqsCapturingSendMessage($captured);
+
+        $channel = new ServiceBusSQSChannel(makeSqsConfig(), $sqsMock);
+        $channel->send(new AnonymousNotifiable(), makeKnownNotification($eventType, $payload));
+
+        // Must not include any `entity=` suffix — missing nested ref → arm null → fall through.
+        expect($captured['MessageGroupId'])->toEqual(SQS_TEST_EVENT_FROM);
+    },
+)->with(
+    [
+        // 2-level missing: production-reported case. Payload populated but no `user` key.
+        'UserAnonymized: payload exists, user key absent' => [
+            'UserAnonymized',
+            ['something_else' => ['reference' => 'X']],
+        ],
+        // payload itself empty array (no withPayload() call path).
+        'UserAnonymized: empty payload' => ['UserAnonymized', []],
+        // 4-level missing: deepest path in the match expression.
+        'AlertSent: payload exists, alert.user.reference absent' => [
+            'AlertSent',
+            ['alert' => ['user' => []]],
+        ],
+        'AlertSent: payload exists, alert key absent' => ['AlertSent', []],
+        // Sample one per remaining entity family so no precedence regression sneaks back in.
+        'ListingCreated: missing listing' => ['ListingCreated', []],
+        'TopicCreated: missing topic' => ['TopicCreated', []],
+        'AdvertiserCreated: missing advertiser' => ['AdvertiserCreated', []],
+        'ArticleCreated: missing article' => ['ArticleCreated', []],
+        'AuthorCreated: missing author' => ['AuthorCreated', []],
+        'SportEventCreated: missing sport_event' => ['SportEventCreated', []],
+    ],
+);
+
 it(
     'sets MessageGroupId and MessageDeduplicationId on FIFO queues',
     function () {

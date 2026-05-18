@@ -150,6 +150,11 @@ class ServiceBusSQSChannel
     {
         $messageGroupId = $message['from'];
 
+        // Each payload-keyed arm uses Arr::get with dot notation so a missing
+        // nested key returns null (whole arm = null → falls through to the
+        // ternary below and we return bare `from`). Avoids the operator-
+        // precedence trap of `'x=' . $arr['k'] ?? null`, where `.` binds
+        // tighter than `??` and the array access still raises a warning.
         $append = match ($message['events'][0] ?? null) {
             'ListingCreated',
             'ListingUpdated',
@@ -160,23 +165,23 @@ class ServiceBusSQSChannel
             'ListingProductsRemoved',
             'ListingShared',
             'ListingFavouriteCreated',
-            'ListingFavouriteRemoved' => 'listing=' . $message['payload']['listing']['reference'] ?? null,
+            'ListingFavouriteRemoved' => ($ref = Arr::get($message, 'payload.listing.reference')) ? "listing=$ref" : null,
 
             'TopicCreated',
             'TopicUpdated',
-            'TopicDeleted' => 'topic=' . $message['payload']['topic']['reference'] ?? null,
+            'TopicDeleted' => ($ref = Arr::get($message, 'payload.topic.reference')) ? "topic=$ref" : null,
 
             'AlertCreated',
             'AlertUpdated',
             'AlertDeleted',
-            'AlertSent' => 'user_alert=' . $message['payload']['alert']['user']['reference'] ?? null,
+            'AlertSent' => ($ref = Arr::get($message, 'payload.alert.user.reference')) ? "user_alert=$ref" : null,
 
             'AdvertiserCreated',
             'AdvertiserUpdated',
             'AdvertiserDeleted',
             'AdvertiserProductsAdded',
             'AdvertiserProductsRemoved',
-            'AdvertiserLeadCreated' => 'advertiser=' . $message['payload']['advertiser']['reference'] ?? null,
+            'AdvertiserLeadCreated' => ($ref = Arr::get($message, 'payload.advertiser.reference')) ? "advertiser=$ref" : null,
 
             'UserCreated',
             'UserUpdated',
@@ -189,7 +194,7 @@ class ServiceBusSQSChannel
             'UserProductsAdded',
             'UserProductsRemoved',
             'UserLeadCreated',
-            'UserAnonymized' => 'user=' . $message['payload']['user']['reference'] ?? null,
+            'UserAnonymized' => ($ref = Arr::get($message, 'payload.user.reference')) ? "user=$ref" : null,
 
             'SiteLeadCreated' => 'site_lead',
 
@@ -203,15 +208,15 @@ class ServiceBusSQSChannel
 
             'ArticleCreated',
             'ArticleUpdated',
-            'ArticleDeleted' => 'article=' . $message['payload']['article']['reference'] ?? null,
+            'ArticleDeleted' => ($ref = Arr::get($message, 'payload.article.reference')) ? "article=$ref" : null,
 
             'AuthorCreated',
             'AuthorUpdated',
-            'AuthorDeleted' => 'author=' . $message['payload']['author']['reference'] ?? null,
+            'AuthorDeleted' => ($ref = Arr::get($message, 'payload.author.reference')) ? "author=$ref" : null,
 
             'SportEventCreated',
             'SportEventUpdated',
-            'SportEventDeleted' => 'sport_event=' . $message['payload']['sport_event']['reference'] ?? null,
+            'SportEventDeleted' => ($ref = Arr::get($message, 'payload.sport_event.reference')) ? "sport_event=$ref" : null,
 
             'NewsletterSubscribed',
             'NewsletterUnsubscribed' => 'newsletter',
